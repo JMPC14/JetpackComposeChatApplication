@@ -1,5 +1,6 @@
-package com.example.newcomposeapplication
+package com.example.jetpackcomposechatapplication.launcher
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -35,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.example.jetpackcomposechatapplication.main.MainActivity
+import com.example.jetpackcomposechatapplication.R
 
 class RegisterFragment : Fragment() {
 
@@ -60,7 +63,7 @@ class RegisterFragment : Fragment() {
                 Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxHeight()
-                                .then(Modifier.padding(top = 100.dp))
+                                .then(Modifier.padding(top = 30.dp))
                 ) {
 
                     Image(
@@ -96,11 +99,11 @@ class RegisterFragment : Fragment() {
                         val passwordConfirmModifier = createModifier(passwordConfirmationState)
 
                         Column {
-                            Image(asset = imageResource(R.drawable.ic_baseline_account_circle_white_24), modifier = Modifier.size(100.dp, 100.dp))
+//                            Image(asset = imageResource(R.drawable.ic_baseline_account_circle_white_24), modifier = Modifier.size(100.dp, 100.dp))
                             Text("Choose a profile picture", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
 
-                        Box(alignment = Alignment.CenterStart) {
+                        Box(alignment = Alignment.CenterStart, modifier = Modifier.padding(top = 20.dp)) {
                             BasicTextField(
                                     value = emailState.value,
                                     onValueChange = { emailState.value = it },
@@ -177,7 +180,8 @@ class RegisterFragment : Fragment() {
 
                         Button(
                                 onClick = {
-
+                                    startActivity(Intent(requireContext(), MainActivity::class.java))
+                                    requireActivity().finish()
                                 },
                                 colors = ButtonConstants.defaultButtonColors(backgroundColor = Color.White),
                                 modifier = Modifier.padding(top = 30.dp).then(Modifier.size(width = 335.dp, height = 44.dp))

@@ -1,4 +1,4 @@
-package com.example.newcomposeapplication
+package com.example.jetpackcomposechatapplication
 
 import org.junit.Test
 

@@ -1,0 +1,83 @@
+{
+  "project_info": {
+    "project_number": "202192448549",
+    "firebase_url": "https://chatapplication-524a9.firebaseio.com",
+    "project_id": "chatapplication-524a9",
+    "storage_bucket": "chatapplication-524a9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:202192448549:android:5a4f89b5f3e06e17ed63cc",
+        "android_client_info": {
+          "package_name": "com.example.chatapplication2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "202192448549-o2cu4cduhu62eg2tnra5qt5r7b99e4vf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdVyRigNcZmbTWypcjM8umXZzuFseVlzU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "202192448549-o2cu4cduhu62eg2tnra5qt5r7b99e4vf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "202192448549-55ar7imjfcmtqprdvk4p00dvbfnckt68.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.Jack.SwiftUIFirebaseApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:202192448549:android:11dd7abbfde012b9ed63cc",
+        "android_client_info": {
+          "package_name": "com.example.jetpackcomposechatapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "202192448549-o2cu4cduhu62eg2tnra5qt5r7b99e4vf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdVyRigNcZmbTWypcjM8umXZzuFseVlzU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "202192448549-o2cu4cduhu62eg2tnra5qt5r7b99e4vf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "202192448549-55ar7imjfcmtqprdvk4p00dvbfnckt68.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.Jack.SwiftUIFirebaseApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

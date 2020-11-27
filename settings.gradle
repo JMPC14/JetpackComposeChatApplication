@@ -1,2 +1,2 @@
-rootProject.name = "New Compose Application"
+rootProject.name = "Jetpack Compose Chat Application"
 include ':app'

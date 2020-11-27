@@ -1,15 +1,13 @@
-package com.example.newcomposeapplication
+package com.example.jetpackcomposechatapplication.launcher
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.ActivityResultRegistry
-import androidx.activity.result.contract.ActivityResultContract
+import android.widget.Toast
 import androidx.compose.foundation.ClickableText
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,6 +37,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.fragment.findNavController
+import com.example.jetpackcomposechatapplication.main.MainActivity
+import com.example.jetpackcomposechatapplication.R
+import com.google.firebase.auth.FirebaseAuth
 
 class LoginFragment : Fragment() {
 
@@ -81,11 +82,11 @@ class LoginFragment : Fragment() {
                     )
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        val usernameState = remember { mutableStateOf(TextFieldValue()) }
+                        val emailState = remember { mutableStateOf(TextFieldValue()) }
                         val passwordState = remember { mutableStateOf(TextFieldValue()) }
 
                         val usernameModifier = Modifier.border(width = 2.dp,
-                                color = if (usernameState.value.text != "") Color.White else Color(resources.getColor(R.color.half_white, null)),
+                                color = if (emailState.value.text != "") Color.White else Color(resources.getColor(R.color.half_white, null)),
                                 shape = RoundedCornerShape(10))
                                 .then(Modifier.padding(15.dp))
                                 .then(Modifier.preferredWidthIn(min = 300.dp))
@@ -98,8 +99,8 @@ class LoginFragment : Fragment() {
 
                         Box(alignment = Alignment.CenterStart) {
                             BasicTextField(
-                                    value = usernameState.value,
-                                    onValueChange = { usernameState.value = it },
+                                    value = emailState.value,
+                                    onValueChange = { emailState.value = it },
                                     maxLines = 1,
                                     modifier = usernameModifier,
                                     cursorColor = Color.White,
@@ -108,7 +109,7 @@ class LoginFragment : Fragment() {
 
                             Text(
                                     "Email",
-                                    modifier = Modifier.padding(start = 14.dp).then(Modifier.drawOpacity(if (usernameState.value.text == "") 0.7f else 0f)),
+                                    modifier = Modifier.padding(start = 14.dp).then(Modifier.drawOpacity(if (emailState.value.text == "") 0.7f else 0f)),
                                     color = (Color.White)
                             )
                         }
@@ -141,11 +142,48 @@ class LoginFragment : Fragment() {
                         }
 
                         Button(
-                                onClick = {
+                            onClick = {
+                                if (emailState.value.text.isEmpty()) {
+                                    Toast.makeText(
+                                            requireContext(),
+                                            "Please enter an email address",
+                                            Toast.LENGTH_LONG
+                                    ).show()
+                                    return@Button
+                                }
 
-                                },
-                                colors = ButtonConstants.defaultButtonColors(backgroundColor = Color.White),
-                                modifier = Modifier.padding(top = 10.dp).then(Modifier.size(width = 335.dp, height = 44.dp))
+                                if (passwordState.value.text.isEmpty()) {
+                                    Toast.makeText(
+                                            requireContext(),
+                                            "Please enter a password",
+                                            Toast.LENGTH_LONG
+                                    ).show()
+                                    return@Button
+                                }
+
+                                FirebaseAuth.getInstance().signInWithEmailAndPassword(
+                                    emailState.value.text,
+                                    passwordState.value.text
+                                )
+                                    .addOnCompleteListener {
+                                        if (it.isSuccessful) {
+
+                                            startActivity(Intent(requireContext(), MainActivity::class.java))
+                                            requireActivity().finish()
+                                            Log.d("TAG", "LOGIN SUCCESSFUL")
+                                        }
+                                    }
+                                    .addOnFailureListener {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Login failed: ${it.message}",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                            },
+                            colors = ButtonConstants.defaultButtonColors(backgroundColor = Color.White),
+                            modifier = Modifier.padding(top = 10.dp)
+                                .then(Modifier.size(width = 335.dp, height = 44.dp))
                         ) {
                             Text("Sign In", color = Color(resources.getColor(R.color.default_green, null)))
                         }

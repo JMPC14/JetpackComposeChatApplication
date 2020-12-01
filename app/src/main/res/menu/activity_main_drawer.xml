@@ -6,6 +6,12 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_latest_messages"
-            android:title="Item" />
+            android:title="Latest Messages" />
+        <item
+            android:id="@+id/nav_contacts"
+            android:title="Contacts" />
+        <item
+            android:id="@+id/nav_blocklist"
+            android:title="Blocklist" />
     </group>
 </menu>

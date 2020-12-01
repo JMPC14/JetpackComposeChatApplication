@@ -136,7 +136,7 @@ class LoginFragment : Fragment() {
 
                         Column(modifier = Modifier.align(Alignment.End)) {
                             ClickableText(AnnotatedString("Forgot Password?"), onClick = {
-                                Log.d("TAG", "FORGOT PASSWORD")
+                                Log.d("NEWTAG", "FORGOT PASSWORD")
                             }, style = TextStyle(color = Color.White, fontWeight =
                             FontWeight.Bold, fontSize = 16.sp), modifier = Modifier.padding(top = 12.dp, bottom = 15.dp))
                         }
@@ -170,7 +170,7 @@ class LoginFragment : Fragment() {
 
                                             startActivity(Intent(requireContext(), MainActivity::class.java))
                                             requireActivity().finish()
-                                            Log.d("TAG", "LOGIN SUCCESSFUL")
+                                            Log.d("NEWTAG", "LOGIN SUCCESSFUL")
                                         }
                                     }
                                     .addOnFailureListener {

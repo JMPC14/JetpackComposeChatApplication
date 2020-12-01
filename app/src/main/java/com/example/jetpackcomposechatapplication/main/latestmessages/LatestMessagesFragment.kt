@@ -1,54 +1,59 @@
-package com.example.jetpackcomposechatapplication.main
+package com.example.jetpackcomposechatapplication.main.latestmessages
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumnFor
-import androidx.compose.foundation.lazy.LazyRowFor
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.res.loadImageResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
-import androidx.ui.tooling.preview.Preview
+import androidx.navigation.fragment.findNavController
 import com.example.jetpackcomposechatapplication.Border
-import com.example.jetpackcomposechatapplication.FirebaseManager
 import com.example.jetpackcomposechatapplication.R
 import com.example.jetpackcomposechatapplication.border
 import com.example.jetpackcomposechatapplication.launcher.LauncherActivity
+import com.example.jetpackcomposechatapplication.main.UserViewModel
+import com.example.jetpackcomposechatapplication.main.chat.ChatViewModel
 import com.example.jetpackcomposechatapplication.models.ChatMessage
 import com.example.jetpackcomposechatapplication.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.squareup.picasso.Picasso
 import de.hdodenhof.circleimageview.CircleImageView
+import dev.chrisbanes.accompanist.picasso.PicassoImage
 
 class LatestMessagesFragment : Fragment() {
 
-    private var latestMessages = mutableListOf<ChatMessage>()
     lateinit var latestMessagesViewModel: LatestMessagesViewModel
+    lateinit var userViewModel: UserViewModel
+    lateinit var chatViewModel: ChatViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return ComposeView(context = requireContext()).apply {
+        return ComposeView(requireContext()).apply {
             setContent {
                 LatestMessages()
             }
@@ -57,92 +62,65 @@ class LatestMessagesFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         latestMessagesViewModel = ViewModelProvider(requireActivity()).get(LatestMessagesViewModel::class.java)
+        userViewModel = ViewModelProvider(requireActivity()).get(UserViewModel::class.java)
+        chatViewModel = ViewModelProvider(requireActivity()).get(ChatViewModel::class.java)
 
-        if (FirebaseManager.user == null) {
+        if (userViewModel.user.value == null) {
             fetchCurrentUser()
         }
 
         listenForLatestMessages()
-
-        latestMessages.add(
-            ChatMessage(
-                "testId",
-                "testText1",
-                "testFromId1",
-                "testToId",
-                "timestamp",
-                0
-            )
-        )
-        latestMessages.add(
-            ChatMessage(
-                "testId",
-                "testText2",
-                "testFromId2",
-                "testToId",
-                "timestamp",
-                0
-            )
-        )
     }
 
     @Composable
     fun LatestMessages() {
-        Column {
-            LazyColumnFor(items = latestMessages) { chatMessage ->
-                LatestMessageItem(chatMessage) {
-                    // onclick
+        val messages by latestMessagesViewModel.latestMessages.observeAsState()
+        if (messages != null) {
+            ScrollableColumn {
+                latestMessagesViewModel.latestMessages.value?.forEach {
+                    LatestMessageItem(it.key, it.value)
                 }
             }
-//            latestMessagesViewModel.latestMessages.observe(viewLifecycleOwner, {
-//                latestMessages = it
-//            })
         }
     }
 
     @Composable
-    fun LatestMessageItem(message: ChatMessage, onClick: (ChatMessage) -> Unit) {
+    fun LatestMessageItem(user: User, message: ChatMessage) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.height(75.dp)
                 .then(Modifier.border(bottom = Border(0.5.dp, Color.LightGray)))
-                .then(Modifier.fillMaxWidth())
-        ) {
-            val image = loadImageResource(id = R.drawable.dog)
-            image.resource.resource?.let {
-                Image(
-                        asset = it,
-                        modifier = Modifier.padding(start = 10.dp)
-                                .then(Modifier.background(Color.Black, CircleShape))
-                                .then(Modifier.border(2.dp, Color.Black, CircleShape))
-                                .then(Modifier.preferredSize(50.dp)
-                                        .clip(CircleShape)),
-                        contentScale = ContentScale.Crop,
+                .then(
+                    Modifier.fillMaxWidth()
+                        .then(Modifier.clickable {
+                            chatViewModel.tempUser = user
+                            findNavController().navigate(R.id.action_nav_latest_messages_to_chatFragment)
+                        })
                 )
-            }
+        ) {
+            PicassoImage(
+                data = user.profileImageUrl,
+                modifier = Modifier.padding(start = 10.dp)
+                    .then(Modifier.background(Color.Black, CircleShape))
+                    .then(Modifier.border(1.5.dp, Color.Black, CircleShape))
+                    .then(
+                        Modifier.preferredSize(60.dp)
+                            .clip(CircleShape)
+                    ),
+                contentScale = ContentScale.Crop
+            )
 
             Column(modifier = Modifier.padding(start = 15.dp)) {
-                Text(message.fromId, modifier = Modifier.padding(bottom = 10.dp))
+                Text(
+                    user.username,
+                    modifier = Modifier.padding(bottom = 6.dp),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
 
-                Text(message.text, color = Color.LightGray)
+                val text = if (user.uid == userViewModel.user.value?.uid) "You: " else "Them: "
+                Text(text + message.text, color = Color.Gray, fontSize = 16.sp)
             }
-        }
-    }
-
-    @Preview
-    @Composable
-    fun Preview() {
-        LatestMessageItem(
-            ChatMessage(
-                "testId",
-                "testText1",
-                "testFromId1",
-                "testToId",
-                "timestamp",
-                0
-            )
-        ) {
-
         }
     }
 
@@ -160,36 +138,36 @@ class LatestMessagesFragment : Fragment() {
 //            }
             val ref = FirebaseDatabase.getInstance().getReference("/users/$uid")
             ref.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onCancelled(p0: DatabaseError) {
-                }
+                override fun onCancelled(p0: DatabaseError) {}
 
                 override fun onDataChange(p0: DataSnapshot) {
-                    FirebaseManager.user = p0.getValue(User::class.java)
-                    val imageView = requireActivity().findViewById<CircleImageView>(R.id.navHeaderImageView)
-                    val textViewUsername = requireActivity().findViewById<TextView>(R.id.navHeaderUsername)
-                    val textViewEmail = requireActivity().findViewById<TextView>(R.id.navHeaderEmail)
-                    Picasso.get().load(FirebaseManager.user?.profileImageUrl).into(imageView)
-                    textViewUsername.text = FirebaseManager.user?.username
-                    textViewEmail.text = FirebaseManager.user?.email
+                    userViewModel.user.value = p0.getValue(User::class.java)
+                    updateNavHeader()
                 }
             })
         }
     }
 
-    val latestMessageMap = HashMap<String, ChatMessage>()
+    fun updateNavHeader() {
+        val imageView = requireActivity().findViewById<CircleImageView>(R.id.navHeaderImageView)
+        val textViewUsername = requireActivity().findViewById<TextView>(R.id.navHeaderUsername)
+        val textViewEmail = requireActivity().findViewById<TextView>(R.id.navHeaderEmail)
+        Picasso.get().load(userViewModel.user.value?.profileImageUrl).into(imageView)
+        textViewUsername.text = userViewModel.user.value?.username
+        textViewEmail.text = userViewModel.user.value?.email
+    }
 
     private fun refreshRecyclerViewMessages() {
-        val sortedMap = latestMessageMap.toList().sortedByDescending { it.second.time }.toMap()
-        latestMessages = latestMessageMap.values.toMutableList()
-//        sortedMap.values.forEach { adapter.add(LatestMessageRow(it)) }
+        val map = HashMap<User, ChatMessage>()
+        latestMessagesViewModel.latestMessages.value!!.toList().sortedByDescending { it.second.text }.toMap(map)
+        latestMessagesViewModel.latestMessages.value = map
     }
 
     private fun listenForLatestMessages() {
         val fromId = FirebaseAuth.getInstance().uid
         val ref = FirebaseDatabase.getInstance().getReference("/latest-messages/$fromId")
         ref.addChildEventListener(object: ChildEventListener {
-            override fun onCancelled(p0: DatabaseError) {
-            }
+            override fun onCancelled(p0: DatabaseError) {}
 
             override fun onChildAdded(p0: DataSnapshot, p1: String?) {
                 val chatMessage = p0.getValue(ChatMessage::class.java) ?: return
@@ -198,8 +176,7 @@ class LatestMessagesFragment : Fragment() {
 //                    if (FirebaseManager.blocklist!!.contains(chatMessage.fromId) || FirebaseManager.blocklist!!.contains(chatMessage.toId)) { return }
 //                }
 
-                latestMessageMap[p0.key!!] = chatMessage
-                refreshRecyclerViewMessages()
+                fetchUserForMessage(p0.key!!, chatMessage)
             }
 
             override fun onChildChanged(p0: DataSnapshot, p1: String?) {
@@ -209,15 +186,28 @@ class LatestMessagesFragment : Fragment() {
 //                    if (FirebaseManager.blocklist!!.contains(chatMessage.fromId) || FirebaseManager.blocklist!!.contains(chatMessage.toId)) { return }
 //                }
 
-                latestMessageMap[p0.key!!] = chatMessage
-                refreshRecyclerViewMessages()
+                fetchUserForMessage(p0.key!!, chatMessage)
             }
 
-            override fun onChildMoved(p0: DataSnapshot, p1: String?) {
+            override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
+
+            override fun onChildRemoved(p0: DataSnapshot) {}
+        })
+    }
+
+    fun fetchUserForMessage(key: String, chatMessage: ChatMessage) {
+        var user: User?
+        val userRef = FirebaseDatabase.getInstance().getReference("users/$key")
+        userRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                user = snapshot.getValue(User::class.java)
+                if (user != null) {
+                    latestMessagesViewModel.latestMessages.value!![user!!] = chatMessage
+                    refreshRecyclerViewMessages()
+                }
             }
 
-            override fun onChildRemoved(p0: DataSnapshot) {
-            }
+            override fun onCancelled(error: DatabaseError) {}
         })
     }
 }

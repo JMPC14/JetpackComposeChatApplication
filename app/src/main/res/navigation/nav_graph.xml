@@ -7,6 +7,18 @@
 
     <fragment
         android:id="@+id/nav_latest_messages"
-        android:name="com.example.jetpackcomposechatapplication.main.LatestMessagesFragment"
-        android:label="Latest Messages" />
+        android:name="com.example.jetpackcomposechatapplication.main.latestmessages.LatestMessagesFragment"
+        android:label="Latest Messages" >
+        <action
+            android:id="@+id/action_nav_latest_messages_to_chatFragment"
+            app:destination="@id/chatFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_contacts"
+        android:name="com.example.jetpackcomposechatapplication.main.contacts.ContactsFragment"
+        android:label="Contacts" />
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.example.jetpackcomposechatapplication.main.chat.ChatFragment"
+        android:label="Chat" />
 </navigation>

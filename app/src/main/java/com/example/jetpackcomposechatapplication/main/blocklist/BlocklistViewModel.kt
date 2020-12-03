@@ -1,4 +1,4 @@
-package com.example.jetpackcomposechatapplication.main.contacts
+package com.example.jetpackcomposechatapplication.main.blocklist
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
@@ -10,24 +10,23 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
-class ContactsViewModel: ViewModel() {
-    var contacts = MutableLiveData<List<User>>()
+class BlocklistViewModel: ViewModel() {
+    var blocklist = MutableLiveData<List<User>>()
 
     init {
-        contacts.value = mutableListOf()
+        blocklist.value = mutableListOf()
     }
 
-    fun addContact(user: User) {
-        val mutableContacts = contacts.value?.toMutableList()
+    fun addBlockedUser(user: User) {
+        val mutableContacts = blocklist.value?.toMutableList()
         mutableContacts?.add(user)
-        contacts.value = mutableContacts!!
+        blocklist.value = mutableContacts!!
     }
 
-    fun fetchContacts() {
-        contacts.value = listOf()
+    fun fetchBlocklist() {
         val uid = FirebaseAuth.getInstance().uid
-        FirebaseDatabase.getInstance().getReference("/users/$uid/contacts")
-                .addListenerForSingleValueEvent(object: ValueEventListener {
+        FirebaseDatabase.getInstance().getReference("/users/$uid/blocklist")
+                .addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onCancelled(p0: DatabaseError) {}
 
                     override fun onDataChange(p0: DataSnapshot) {
@@ -37,7 +36,7 @@ class ContactsViewModel: ViewModel() {
                                 override fun onDataChange(snapshot: DataSnapshot) {
                                     val user = snapshot.getValue(User::class.java)
                                     if (user != null) {
-                                        addContact(user)
+                                        addBlockedUser(user)
                                         Log.d("NEWTAG", "ADDING CONTACT $user")
                                     }
                                 }

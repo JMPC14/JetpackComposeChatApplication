@@ -54,7 +54,7 @@ class ContactsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         contactsViewModel = ViewModelProvider(requireActivity()).get(ContactsViewModel::class.java)
 
-        fetchContacts()
+        contactsViewModel.fetchContacts()
     }
 
     @Composable
@@ -74,17 +74,13 @@ class ContactsFragment : Fragment() {
     }
 
     @Composable
-    fun ContactItem(user: User) {
+    fun ContactItem(user: User, modifier: Modifier = Modifier) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.height(75.dp)
-                .then(Modifier.border(bottom = Border(0.5.dp, Color.LightGray)))
-                .then(
-                    Modifier.fillMaxWidth()
-                        .then(Modifier.clickable {
-                            Log.d("NEWTAG", "${user.uid} CLICKED")
-                        })
-                )
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.height(75.dp)
+                        .then(Modifier.border(bottom = Border(0.5.dp, Color.LightGray)))
+                        .then(Modifier.fillMaxWidth())
+                        .then(modifier)
         ) {
             PicassoImage(
                 data = user.profileImageUrl,
@@ -107,31 +103,5 @@ class ContactsFragment : Fragment() {
                 )
             }
         }
-    }
-
-    private fun fetchContacts() {
-        contactsViewModel.contacts.value = listOf()
-        val uid = FirebaseAuth.getInstance().uid
-        FirebaseDatabase.getInstance().getReference("/users/$uid/contacts")
-            .addListenerForSingleValueEvent(object: ValueEventListener {
-            override fun onCancelled(p0: DatabaseError) {}
-
-            override fun onDataChange(p0: DataSnapshot) {
-                p0.children.forEach {
-                    val newRef = FirebaseDatabase.getInstance().getReference("/users/${it.value.toString()}")
-                    newRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                        override fun onDataChange(snapshot: DataSnapshot) {
-                            val user = snapshot.getValue(User::class.java)
-                            if (user != null) {
-                                contactsViewModel.addContact(user)
-                                Log.d("NEWTAG", "ADDING CONTACT $user")
-                            }
-                        }
-
-                        override fun onCancelled(error: DatabaseError) {}
-                    })
-                }
-            }
-        })
     }
 }

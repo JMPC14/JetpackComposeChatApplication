@@ -1,23 +1,23 @@
 package com.example.jetpackcomposechatapplication.main.chat
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumnFor
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,19 +29,28 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import com.example.jetpackcomposechatapplication.R
 import com.example.jetpackcomposechatapplication.main.UserViewModel
 import com.example.jetpackcomposechatapplication.models.ChatMessage
-import com.google.firebase.database.*
+import com.example.jetpackcomposechatapplication.models.FileAttachment
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
 import dev.chrisbanes.accompanist.picasso.PicassoImage
+import kotlinx.coroutines.*
+import java.time.LocalDateTime
+import java.util.*
 
 class ChatFragment : Fragment() {
 
     lateinit var chatViewModel: ChatViewModel
     lateinit var userViewModel: UserViewModel
+
+    var sendMessageState = mutableStateOf(TextFieldValue())
 
     override fun onCreateView(
             inflater: LayoutInflater, container: ViewGroup?,
@@ -58,10 +67,30 @@ class ChatFragment : Fragment() {
         chatViewModel = ViewModelProvider(requireActivity()).get(ChatViewModel::class.java)
         userViewModel = ViewModelProvider(requireActivity()).get(UserViewModel::class.java)
 
-        chatViewModel.messages.value = listOf()
+        with (chatViewModel) {
+            messages.value = listOf()
 
-        if (chatViewModel.tempUser != null) {
-            chatViewModel.listenForMessages(userViewModel.user.value?.uid!!, chatViewModel.tempUser!!.uid)
+            if (tempUser != null) {
+                listenForMessages(userViewModel.user.value?.uid!!, chatViewModel.tempUser!!.uid)
+            }
+
+            tempWriting.observe(viewLifecycleOwner, {
+                if (it != "") {
+                    sendMessageState = mutableStateOf(TextFieldValue(it))
+                }
+            })
+        }
+    }
+
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 0 && resultCode == Activity.RESULT_OK && data != null) {
+            chatViewModel.photoAttachmentUri = data.data
+        }
+
+        if (requestCode == 1 && resultCode == Activity.RESULT_OK && data != null) {
+            chatViewModel.fileAttachmentUri = data.data
         }
     }
 
@@ -69,27 +98,6 @@ class ChatFragment : Fragment() {
     fun Chat() {
         Column {
             Box(alignment = Alignment.BottomCenter) {
-//                val messages by chatViewModel.messages.observeAsState()
-//                if (messages != null) {
-//                    LazyColumnFor(items = messages!!, modifier = Modifier.fillMaxSize()) { chatMessage ->
-//                        if (chatMessage.fromId == userViewModel.user.value?.uid) {
-//                            val modifier = if (chatViewModel.messages.value?.last() == chatMessage) {
-//                                Modifier.padding(bottom = 55.dp)
-//                            } else {
-//                                Modifier.padding(0.dp)
-//                            }
-//                            ChatMessageFromItem(chatMessage, modifier)
-//                        } else {
-//                            val modifier = if (chatViewModel.messages.value?.last() == chatMessage) {
-//                                Modifier.padding(bottom = 55.dp)
-//                            } else {
-//                                Modifier.padding(0.dp)
-//                            }
-//                            ChatMessageToItem(chatMessage, modifier)
-//                        }
-//                    }
-//                }
-
                 val scrollState = rememberScrollState()
                 ScrollableColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -120,13 +128,13 @@ class ChatFragment : Fragment() {
                     }
                 }
 
-                ChatSendMessageArea()
+                ChatSendMessageBar()
             }
         }
     }
 
     @Composable
-    fun ChatSendMessageArea() {
+    fun ChatSendMessageBar() {
         Row(
                 modifier = Modifier.height(50.dp)
                         .then(
@@ -143,17 +151,34 @@ class ChatFragment : Fragment() {
         ) {
             Image(
                     asset = vectorResource(id = R.drawable.ic_baseline_photo_camera_green_24),
-                    modifier = Modifier.height(40.dp)
-                            .then(Modifier.padding(start = 2.dp))
+                    modifier = Modifier.size(35.dp)
+                            .then(Modifier.padding(start = 8.dp))
+                            .then(Modifier.clickable(onClick = {
+                                if ("image already attached" == "") {
+                                    return@clickable
+                                }
+                                val intent = Intent(Intent.ACTION_PICK)
+                                intent.type = "image/*"
+                                startActivityForResult(intent, 0)
+                            }))
             )
 
             Image(
                     asset = vectorResource(R.drawable.ic_baseline_folder_open_green_24),
-                    modifier = Modifier.height(40.dp)
-                            .then(Modifier.padding(start = 2.dp, end = 2.dp))
+                    modifier = Modifier.size(42.dp)
+                            .then(Modifier.padding(start = 8.dp, end = 8.dp))
+                            .then(Modifier.clickable(onClick = {
+                                Log.d("TAG", "CLICKED")
+                                if ("file already attached" == "") {
+                                    return@clickable
+                                }
+                                val intent = Intent(Intent.ACTION_PICK)
+                                intent.type = "*/*"
+                                startActivityForResult(intent, 1)
+                            }))
             )
 
-            val sendMessageState = remember { mutableStateOf(TextFieldValue()) }
+            sendMessageState = remember { mutableStateOf(TextFieldValue(chatViewModel.tempWriting.value!!)) }
 
             val sendMessageModifier = Modifier.border(
                     width = 1.5.dp,
@@ -176,7 +201,10 @@ class ChatFragment : Fragment() {
             ) {
                 BasicTextField(
                         value = sendMessageState.value,
-                        onValueChange = { sendMessageState.value = it },
+                        onValueChange = {
+                            sendMessageState.value = it
+                            chatViewModel.tempWriting.value = it.text
+                        },
                         modifier = sendMessageModifier,
                         cursorColor = Color.Black,
                         textStyle = TextStyle(color = Color.Black)
@@ -192,9 +220,23 @@ class ChatFragment : Fragment() {
 
             TextButton(onClick = {
 
+                with(chatViewModel) {
+                    if (photoAttachmentUri != null) {
+                        uploadImage()
+                    } else if (fileAttachmentUri != null) {
+                        uploadFile()
+                    } else {
+                        performSendMessage()
+                    }
+                }
+                sendMessageState.value = TextFieldValue()
             },
-                    modifier = Modifier.padding(end = 5.dp),
-                    contentPadding = PaddingValues(0.dp)
+                    modifier = Modifier.offset(x = (-3).dp, y = (-1).dp),
+                    contentPadding = PaddingValues(0.dp),
+                    colors = ButtonConstants.defaultButtonColors(
+                            backgroundColor = Color.Transparent,
+                            contentColor = Color(resources.getColor(R.color.default_green, null))
+                    )
             ) {
                 Text("Send")
             }
@@ -207,13 +249,28 @@ class ChatFragment : Fragment() {
             Spacer(modifier = Modifier.weight(1f))
 
             Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = Alignment.Start,
                     modifier = Modifier.padding(4.dp)
                             .then(Modifier.background(Color(resources.getColor(R.color.default_green, null)), RoundedCornerShape(8.dp)))
                             .then(Modifier.padding(5.dp))
                             .then(Modifier.preferredWidthIn(max = 250.dp))
             ) {
-                Text(message.text)
+                if (message.text.isNotEmpty()) {
+                    Row {
+                        Text(message.text)
+                    }
+                }
+
+                with (message) {
+                    if (imageUrl != null) {
+                        ChatImage(imageUrl!!)
+                    }
+
+                    if (fileUrl != null && fileSize != null && fileType != null) {
+                        val file = FileAttachment(fileType!!, fileSize!!, fileUrl!!)
+                        ChatFile(file)
+                    }
+                }
             }
 
             if (userViewModel.user.value?.profileImageUrl != null) {
@@ -221,8 +278,7 @@ class ChatFragment : Fragment() {
                     PicassoImage(
                             data = userViewModel.user.value?.profileImageUrl!!,
                             modifier = Modifier.padding(top = 5.dp, end = 5.dp)
-                                    .then(Modifier.background(Color.Black, CircleShape))
-                                    .then(Modifier.border(1.5.dp, Color.Black, CircleShape))
+                                    .then(Modifier.border(1.5.dp, Color(resources.getColor(R.color.default_green, null)), CircleShape))
                                     .then(Modifier.drawShadow(4.dp, CircleShape))
                                     .then(
                                             Modifier.size(35.dp)
@@ -243,7 +299,6 @@ class ChatFragment : Fragment() {
                     PicassoImage(
                             data = chatViewModel.tempUser!!.profileImageUrl,
                             modifier = Modifier.padding(top = 5.dp, start = 5.dp)
-                                    .then(Modifier.background(Color.Black, CircleShape))
                                     .then(Modifier.border(1.5.dp, Color.Black, CircleShape))
                                     .then(Modifier.drawShadow(4.dp, CircleShape))
                                     .then(
@@ -256,13 +311,89 @@ class ChatFragment : Fragment() {
             }
 
             Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = Alignment.Start,
                     modifier = Modifier.padding(4.dp)
                             .then(Modifier.background(Color.LightGray, RoundedCornerShape(8.dp)))
                             .then(Modifier.padding(5.dp))
                             .then(Modifier.preferredWidthIn(max = 250.dp))
             ) {
-                Text(message.text)
+                if (message.text.isNotEmpty()) {
+                    Row {
+                        Text(message.text)
+                    }
+                }
+
+                if (message.imageUrl != null) {
+                    ChatImage(message.imageUrl!!)
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ChatImage(imageUrl: String) {
+        PicassoImage(
+                data = imageUrl,
+                modifier = Modifier.padding(top = 4.dp)
+                        .then(Modifier.fillMaxSize())
+                        .then(Modifier.clip(RoundedCornerShape(8.dp)))
+                        .then(Modifier.clickable(onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(imageUrl))
+                            startActivity(intent)
+                        })),
+                contentScale = ContentScale.FillWidth
+        )
+    }
+
+    @Composable
+    fun ChatFile(file: FileAttachment) {
+        Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(top = 4.dp)
+                        .then(Modifier.border(1.dp, Color.LightGray, RoundedCornerShape(8.dp)))
+                        .then(Modifier.background(Color.White, RoundedCornerShape(8.dp)))
+                        .then(Modifier.padding(5.dp))
+                        .then(Modifier.preferredWidthIn(max = 250.dp))
+        ) {
+            Text(file.fileType, fontWeight = FontWeight.Bold)
+
+            Image(
+                    asset = vectorResource(id = R.drawable.ic_baseline_insert_drive_file_24),
+                    modifier = Modifier.size(50.dp)
+            )
+
+            if (file.fileSize > 1000) {
+                Text("${file.fileSize.div(1000)}mB")
+            } else {
+                Text("${file.fileSize}kB")
+            }
+        }
+    }
+
+    private fun uploadImage() {
+        if (chatViewModel.photoAttachmentUri == null) {
+            return
+        }
+        val filename = UUID.randomUUID().toString()
+        val ref = FirebaseStorage.getInstance().getReference("/images/$filename")
+        ref.putFile(chatViewModel.photoAttachmentUri!!)
+                .addOnSuccessListener {
+                    ref.downloadUrl.addOnSuccessListener {
+                        chatViewModel.imageUrl = it.toString()
+                        chatViewModel.performSendMessage()
+                    }
+                }
+    }
+
+    private fun uploadFile() {
+        if (chatViewModel.fileAttachmentUri == null) { return }
+        val filename = UUID.randomUUID().toString()
+        val ref = FirebaseStorage.getInstance().getReference("/files/$filename")
+        ref.putFile(chatViewModel.fileAttachmentUri!!).addOnSuccessListener {
+            ref.downloadUrl.addOnSuccessListener { it2 ->
+                val attachedFileSize = "%.2f".format(it.metadata!!.sizeBytes.toDouble() / 1000).toDouble()
+                chatViewModel.fileAttachment = FileAttachment(it.metadata?.contentType!!, attachedFileSize, it2.toString())
+                chatViewModel.performSendMessage()
             }
         }
     }

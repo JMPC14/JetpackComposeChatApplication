@@ -1,8 +1,8 @@
 package com.example.jetpackcomposechatapplication.main.latestmessages
 
 import android.content.Intent
+import android.graphics.fonts.FontStyle
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -14,6 +14,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.FabPosition
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
@@ -47,7 +51,7 @@ class LatestMessagesFragment : Fragment() {
 
     lateinit var latestMessagesViewModel: LatestMessagesViewModel
     lateinit var userViewModel: UserViewModel
-    lateinit var chatViewModel: ChatViewModel
+    private lateinit var chatViewModel: ChatViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -55,7 +59,25 @@ class LatestMessagesFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                LatestMessages()
+                Scaffold(
+                        floatingActionButton = {
+                            FloatingActionButton(onClick = {
+                                findNavController().navigate(R.id.action_nav_latest_messages_to_newConversationFragment)
+                            },
+                                    backgroundColor = Color(resources.getColor(R.color.default_green, null))) {
+                                Text(
+                                        text = "+",
+                                        fontSize = 28.sp,
+                                        fontWeight = FontWeight.Light,
+                                        color = Color.White,
+                                        modifier = Modifier.offset(y = (-2).dp)
+                                )
+                            }
+                        },
+                        floatingActionButtonPosition = FabPosition.End
+                ) {
+                    LatestMessages()
+                }
             }
         }
     }
@@ -101,7 +123,6 @@ class LatestMessagesFragment : Fragment() {
             PicassoImage(
                 data = user.profileImageUrl,
                 modifier = Modifier.padding(start = 10.dp)
-                    .then(Modifier.background(Color.Black, CircleShape))
                     .then(Modifier.border(1.5.dp, Color.Black, CircleShape))
                     .then(
                         Modifier.preferredSize(60.dp)
@@ -119,7 +140,14 @@ class LatestMessagesFragment : Fragment() {
                 )
 
                 val text = if (user.uid == userViewModel.user.value?.uid) "You: " else "Them: "
-                Text(text + message.text, color = Color.Gray, fontSize = 16.sp)
+                Text(
+                        text = text + message.text,
+                        color = Color.Gray,
+                        fontSize = 16.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(end = 10.dp)
+                )
             }
         }
     }
@@ -159,7 +187,7 @@ class LatestMessagesFragment : Fragment() {
 
     private fun refreshRecyclerViewMessages() {
         val map = HashMap<User, ChatMessage>()
-        latestMessagesViewModel.latestMessages.value!!.toList().sortedByDescending { it.second.text }.toMap(map)
+        latestMessagesViewModel.latestMessages.value!!.toList().sortedByDescending { it.second.time }.toMap(map)
         latestMessagesViewModel.latestMessages.value = map
     }
 

@@ -12,6 +12,9 @@
         <action
             android:id="@+id/action_nav_latest_messages_to_chatFragment"
             app:destination="@id/chatFragment" />
+        <action
+            android:id="@+id/action_nav_latest_messages_to_newConversationFragment"
+            app:destination="@id/newConversationFragment" />
     </fragment>
     <fragment
         android:id="@+id/nav_contacts"
@@ -21,4 +24,20 @@
         android:id="@+id/chatFragment"
         android:name="com.example.jetpackcomposechatapplication.main.chat.ChatFragment"
         android:label="Chat" />
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.example.jetpackcomposechatapplication.main.profile.ProfileFragment"
+        android:label="Profile" />
+    <fragment
+        android:id="@+id/nav_blocklist"
+        android:name="com.example.jetpackcomposechatapplication.main.blocklist.BlocklistFragment"
+        android:label="Blocklist" />
+    <fragment
+        android:id="@+id/newConversationFragment"
+        android:name="com.example.jetpackcomposechatapplication.main.newconversation.NewConversationFragment"
+        android:label="New Conversation">
+        <action
+            android:id="@+id/action_newConversationFragment_to_chatFragment"
+            app:destination="@id/chatFragment" />
+    </fragment>
 </navigation>

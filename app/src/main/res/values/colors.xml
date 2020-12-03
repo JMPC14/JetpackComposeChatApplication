@@ -9,4 +9,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="half_white">#CCFFFFFF</color>
     <color name="default_green">#65c366</color>
+    <color name="profile_green">#3ED770</color>
 </resources>

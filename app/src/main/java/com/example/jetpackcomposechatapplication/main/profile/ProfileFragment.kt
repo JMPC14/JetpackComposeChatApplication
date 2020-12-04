@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawShadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,7 +57,8 @@ class ProfileFragment: Fragment() {
                     modifier = Modifier.padding(30.dp)
                             .then(Modifier.drawShadow(20.dp, CircleShape))
                             .then(Modifier.size(250.dp).clip(CircleShape))
-                            .then(Modifier.border(2.dp, Color.White, CircleShape))
+                            .then(Modifier.border(2.dp, Color.White, CircleShape)),
+                            contentScale = ContentScale.Crop
             )
 
             Column(modifier = Modifier.fillMaxWidth(0.7f)

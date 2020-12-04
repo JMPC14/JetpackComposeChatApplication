@@ -141,16 +141,16 @@ class ChatFragment : Fragment() {
         }
         Column(
                 modifier = modifier
-                .then(
-                        Modifier.background(
-                                VerticalGradient(
-                                        listOf(Color.White, Color.Transparent),
-                                        startY = 100f,
-                                        endY = 0f
+                        .then(
+                                Modifier.background(
+                                        VerticalGradient(
+                                                listOf(Color.White, Color.Transparent),
+                                                startY = 100f,
+                                                endY = 0f
+                                        )
                                 )
                         )
-                )
-                .then(Modifier.background(Color(resources.getColor(R.color.half_white, null))))
+                        .then(Modifier.background(Color(resources.getColor(R.color.half_white, null))))
         ) {
             if (otherUsingTyping != null && otherUsingTyping!!) {
                 Text(

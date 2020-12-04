@@ -1,7 +1,6 @@
 package com.example.jetpackcomposechatapplication.main.chat
 
 import android.net.Uri
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.jetpackcomposechatapplication.models.ChatMessage
@@ -9,13 +8,17 @@ import com.example.jetpackcomposechatapplication.models.FileAttachment
 import com.example.jetpackcomposechatapplication.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.storage.FirebaseStorage
 import java.time.LocalDateTime
 import java.util.*
 
 class ChatViewModel: ViewModel() {
     var messages = MutableLiveData<List<ChatMessage>>()
 
+    var onlineUsers = MutableLiveData<List<String>>()
+
     var tempWriting = MutableLiveData<String>()
+    var otherUserTyping = MutableLiveData<Boolean>()
 
     var tempUser: User? = null
     var tempCid: String? = null
@@ -28,6 +31,7 @@ class ChatViewModel: ViewModel() {
 
     init {
         messages.value = mutableListOf()
+        onlineUsers.value = mutableListOf()
         tempWriting.value = ""
     }
 
@@ -66,8 +70,85 @@ class ChatViewModel: ViewModel() {
         })
     }
 
-    fun loadUser(uid: String) {
+    fun listenForTypingIndicator(user: String, otherUser: String) {
+        val ref = FirebaseDatabase.getInstance().getReference("/user-messages/$user/$otherUser/")
+        ref.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val typing = snapshot.child("typing")
+                if (typing.exists()) {
+                    otherUserTyping.value = typing.value == true
+                }
+            }
 
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
+    private fun addOnlineUser(string: String) {
+        val users = onlineUsers.value?.toMutableList()
+        users?.add(string)
+        onlineUsers.value = users!!
+    }
+
+    private fun removeOnlineUser(string: String) {
+        val users = onlineUsers.value?.toMutableList()
+        users?.remove(string)
+        onlineUsers.value = users!!
+    }
+
+    fun checkOnlineUser(snapshot: DataSnapshot) {
+        if (snapshot.value == true) {
+            addOnlineUser(snapshot.key!!)
+        } else if (snapshot.value == false && onlineUsers.value!!.contains(snapshot.key!!)) {
+            removeOnlineUser(snapshot.key!!)
+        }
+    }
+
+    fun listenForOnlineUsers() {
+        val ref = FirebaseDatabase.getInstance().getReference("/online-users/")
+        ref.addChildEventListener(object : ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                checkOnlineUser(snapshot)
+            }
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                checkOnlineUser(snapshot)
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {}
+
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
+    fun uploadImage() {
+        if (photoAttachmentUri == null) {
+            return
+        }
+        val filename = UUID.randomUUID().toString()
+        val ref = FirebaseStorage.getInstance().getReference("/images/$filename")
+        ref.putFile(photoAttachmentUri!!)
+                .addOnSuccessListener {
+                    ref.downloadUrl.addOnSuccessListener {
+                        imageUrl = it.toString()
+                        performSendMessage()
+                    }
+                }
+    }
+
+    fun uploadFile() {
+        if (fileAttachmentUri == null) { return }
+        val filename = UUID.randomUUID().toString()
+        val ref = FirebaseStorage.getInstance().getReference("/files/$filename")
+        ref.putFile(fileAttachmentUri!!).addOnSuccessListener {
+            ref.downloadUrl.addOnSuccessListener { it2 ->
+                val attachedFileSize = "%.2f".format(it.metadata!!.sizeBytes.toDouble() / 1000).toDouble()
+                fileAttachment = FileAttachment(it.metadata?.contentType!!, attachedFileSize, it2.toString())
+                performSendMessage()
+            }
+        }
     }
 
     fun performSendMessage() {

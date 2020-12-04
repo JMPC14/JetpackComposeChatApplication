@@ -24,7 +24,7 @@ class ContactsViewModel: ViewModel() {
     }
 
     fun fetchContacts() {
-        contacts.value = listOf()
+        contacts.value = mutableListOf()
         val uid = FirebaseAuth.getInstance().uid
         FirebaseDatabase.getInstance().getReference("/users/$uid/contacts")
                 .addListenerForSingleValueEvent(object: ValueEventListener {

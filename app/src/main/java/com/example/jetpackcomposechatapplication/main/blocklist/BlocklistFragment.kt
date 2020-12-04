@@ -45,7 +45,7 @@ class BlocklistFragment: Fragment() {
                     val modifier = Modifier.clickable(onClick = {
                         chatViewModel.tempUser = it
                     })
-                    ContactsFragment().ContactItem(it, modifier)
+                    ContactsFragment().ContactItem(it)
                 }
             }
         }

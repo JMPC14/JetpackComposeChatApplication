@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -26,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.jetpackcomposechatapplication.R
-import com.example.jetpackcomposechatapplication.main.UserViewModel
+import com.example.jetpackcomposechatapplication.main.latestmessages.UserViewModel
 import dev.chrisbanes.accompanist.picasso.PicassoImage
 
 class ProfileFragment: Fragment() {

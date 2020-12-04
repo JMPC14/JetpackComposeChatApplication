@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,20 +28,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.jetpackcomposechatapplication.R
-import com.example.jetpackcomposechatapplication.main.UserViewModel
+import com.example.jetpackcomposechatapplication.main.latestmessages.UserViewModel
 import com.example.jetpackcomposechatapplication.models.ChatMessage
 import com.example.jetpackcomposechatapplication.models.FileAttachment
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.storage.FirebaseStorage
 import dev.chrisbanes.accompanist.picasso.PicassoImage
 import kotlinx.coroutines.*
-import java.time.LocalDateTime
 import java.util.*
 
 class ChatFragment : Fragment() {
@@ -72,6 +70,7 @@ class ChatFragment : Fragment() {
 
             if (tempUser != null) {
                 listenForMessages(userViewModel.user.value?.uid!!, chatViewModel.tempUser!!.uid)
+                listenForTypingIndicator(userViewModel.user.value?.uid!!, chatViewModel.tempUser!!.uid)
             }
 
             tempWriting.observe(viewLifecycleOwner, {
@@ -135,110 +134,129 @@ class ChatFragment : Fragment() {
 
     @Composable
     fun ChatSendMessageBar() {
-        Row(
-                modifier = Modifier.height(50.dp)
-                        .then(
-                                Modifier.background(
-                                        VerticalGradient(
-                                                listOf(Color.White, Color.Transparent),
-                                                startY = 100f,
-                                                endY = 0f
-                                        )
+        val otherUsingTyping by chatViewModel.otherUserTyping.observeAsState()
+        var modifier = Modifier.height(50.dp)
+        if (otherUsingTyping != null && otherUsingTyping!!) {
+            modifier = Modifier.height(68.dp)
+        }
+        Column(
+                modifier = modifier
+                .then(
+                        Modifier.background(
+                                VerticalGradient(
+                                        listOf(Color.White, Color.Transparent),
+                                        startY = 100f,
+                                        endY = 0f
                                 )
                         )
-                        .then(Modifier.background(Color(resources.getColor(R.color.half_white, null)))),
-                verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                    asset = vectorResource(id = R.drawable.ic_baseline_photo_camera_green_24),
-                    modifier = Modifier.size(35.dp)
-                            .then(Modifier.padding(start = 8.dp))
-                            .then(Modifier.clickable(onClick = {
-                                if ("image already attached" == "") {
-                                    return@clickable
-                                }
-                                val intent = Intent(Intent.ACTION_PICK)
-                                intent.type = "image/*"
-                                startActivityForResult(intent, 0)
-                            }))
-            )
-
-            Image(
-                    asset = vectorResource(R.drawable.ic_baseline_folder_open_green_24),
-                    modifier = Modifier.size(42.dp)
-                            .then(Modifier.padding(start = 8.dp, end = 8.dp))
-                            .then(Modifier.clickable(onClick = {
-                                Log.d("TAG", "CLICKED")
-                                if ("file already attached" == "") {
-                                    return@clickable
-                                }
-                                val intent = Intent(Intent.ACTION_PICK)
-                                intent.type = "*/*"
-                                startActivityForResult(intent, 1)
-                            }))
-            )
-
-            sendMessageState = remember { mutableStateOf(TextFieldValue(chatViewModel.tempWriting.value!!)) }
-
-            val sendMessageModifier = Modifier.border(
-                    width = 1.5.dp,
-                    color = if (sendMessageState.value.text != "") Color(
-                            resources.getColor(
-                                    R.color.default_green,
-                                    null
-                            )
-                    ) else Color.Gray,
-                    shape = RoundedCornerShape(20)
-            )
-                    .then(Modifier.padding(6.dp))
-                    .then(Modifier.height(20.dp))
-                    .then(Modifier.fillMaxWidth())
-
-            Box(
-                    modifier = Modifier.padding(end = 5.dp, bottom = 5.dp, top = 5.dp)
-                            .then(Modifier.weight(1f)),
-                    alignment = Alignment.CenterStart
-            ) {
-                BasicTextField(
-                        value = sendMessageState.value,
-                        onValueChange = {
-                            sendMessageState.value = it
-                            chatViewModel.tempWriting.value = it.text
-                        },
-                        modifier = sendMessageModifier,
-                        cursorColor = Color.Black,
-                        textStyle = TextStyle(color = Color.Black)
                 )
-
+                .then(Modifier.background(Color(resources.getColor(R.color.half_white, null))))
+        ) {
+            if (otherUsingTyping != null && otherUsingTyping!!) {
                 Text(
-                        "Write something here...",
-                        modifier = Modifier.padding(start = 6.dp)
-                                .then(Modifier.drawOpacity(if (sendMessageState.value.text == "") 0.7f else 0f)),
-                        color = (Color.Gray)
+                        text = "${chatViewModel.tempUser!!.username} is typing...",
+                        fontSize = 14.sp,
+                        fontStyle = FontStyle.Italic,
+                        modifier = Modifier.padding(start = 8.dp),
+                        fontWeight = FontWeight.Bold
                 )
             }
 
-            TextButton(onClick = {
-
-                with(chatViewModel) {
-                    if (photoAttachmentUri != null) {
-                        uploadImage()
-                    } else if (fileAttachmentUri != null) {
-                        uploadFile()
-                    } else {
-                        performSendMessage()
-                    }
-                }
-                sendMessageState.value = TextFieldValue()
-            },
-                    modifier = Modifier.offset(x = (-3).dp, y = (-1).dp),
-                    contentPadding = PaddingValues(0.dp),
-                    colors = ButtonConstants.defaultButtonColors(
-                            backgroundColor = Color.Transparent,
-                            contentColor = Color(resources.getColor(R.color.default_green, null))
-                    )
+            Row(
+                    verticalAlignment = Alignment.Bottom,
+                    modifier = Modifier.fillMaxHeight()
+                            .then(Modifier.padding(bottom = 4.dp))
             ) {
-                Text("Send")
+                Image(
+                        asset = vectorResource(id = R.drawable.ic_baseline_photo_camera_green_24),
+                        modifier = Modifier.size(35.dp)
+                                .then(Modifier.padding(start = 8.dp, bottom = 7.dp))
+                                .then(Modifier.clickable(onClick = {
+                                    if ("image already attached" == "") {
+                                        return@clickable
+                                    }
+                                    val intent = Intent(Intent.ACTION_PICK)
+                                    intent.type = "image/*"
+                                    startActivityForResult(intent, 0)
+                                }))
+                )
+
+                Image(
+                        asset = vectorResource(R.drawable.ic_baseline_folder_open_green_24),
+                        modifier = Modifier.size(42.dp)
+                                .then(Modifier.padding(start = 8.dp, end = 8.dp))
+                                .then(Modifier.clickable(onClick = {
+                                    Log.d("TAG", "CLICKED")
+                                    if ("file already attached" == "") {
+                                        return@clickable
+                                    }
+                                    val intent = Intent(Intent.ACTION_PICK)
+                                    intent.type = "*/*"
+                                    startActivityForResult(intent, 1)
+                                }))
+                )
+
+                sendMessageState = remember { mutableStateOf(TextFieldValue(chatViewModel.tempWriting.value!!)) }
+
+                val sendMessageModifier = Modifier.border(
+                        width = 1.5.dp,
+                        color = if (sendMessageState.value.text != "") Color(
+                                resources.getColor(
+                                        R.color.default_green,
+                                        null
+                                )
+                        ) else Color.Gray,
+                        shape = RoundedCornerShape(20)
+                )
+                        .then(Modifier.padding(6.dp))
+                        .then(Modifier.height(20.dp))
+                        .then(Modifier.fillMaxWidth())
+
+                Box(
+                        modifier = Modifier.padding(end = 5.dp, bottom = 5.dp, top = 5.dp)
+                                .then(Modifier.weight(1f)),
+                        alignment = Alignment.CenterStart
+                ) {
+                    BasicTextField(
+                            value = sendMessageState.value,
+                            onValueChange = {
+                                sendMessageState.value = it
+                                chatViewModel.tempWriting.value = it.text
+                            },
+                            modifier = sendMessageModifier,
+                            cursorColor = Color.Black,
+                            textStyle = TextStyle(color = Color.Black)
+                    )
+
+                    Text(
+                            "Write something here...",
+                            modifier = Modifier.padding(start = 6.dp)
+                                    .then(Modifier.drawOpacity(if (sendMessageState.value.text == "") 0.7f else 0f)),
+                            color = (Color.Gray)
+                    )
+                }
+
+                TextButton(onClick = {
+                    with(chatViewModel) {
+                        if (photoAttachmentUri != null) {
+                            uploadImage()
+                        } else if (fileAttachmentUri != null) {
+                            uploadFile()
+                        } else {
+                            performSendMessage()
+                        }
+                    }
+                    sendMessageState.value = TextFieldValue()
+                },
+                        modifier = Modifier.offset(x = (-3).dp, y = (-1).dp),
+                        contentPadding = PaddingValues(0.dp),
+                        colors = ButtonConstants.defaultButtonColors(
+                                backgroundColor = Color.Transparent,
+                                contentColor = Color(resources.getColor(R.color.default_green, null))
+                        )
+                ) {
+                    Text("Send")
+                }
             }
         }
     }
@@ -296,10 +314,12 @@ class ChatFragment : Fragment() {
         Row(modifier = modifier) {
             if (chatViewModel.tempUser != null) {
                 Column {
+                    val color = if (chatViewModel.onlineUsers.value!!.contains(message.fromId)) Color(resources.getColor(R.color.default_green, null)) else Color.Black
+
                     PicassoImage(
                             data = chatViewModel.tempUser!!.profileImageUrl,
                             modifier = Modifier.padding(top = 5.dp, start = 5.dp)
-                                    .then(Modifier.border(1.5.dp, Color.Black, CircleShape))
+                                    .then(Modifier.border(1.5.dp, color, CircleShape))
                                     .then(Modifier.drawShadow(4.dp, CircleShape))
                                     .then(
                                             Modifier.size(35.dp)
@@ -366,34 +386,6 @@ class ChatFragment : Fragment() {
                 Text("${file.fileSize.div(1000)}mB")
             } else {
                 Text("${file.fileSize}kB")
-            }
-        }
-    }
-
-    private fun uploadImage() {
-        if (chatViewModel.photoAttachmentUri == null) {
-            return
-        }
-        val filename = UUID.randomUUID().toString()
-        val ref = FirebaseStorage.getInstance().getReference("/images/$filename")
-        ref.putFile(chatViewModel.photoAttachmentUri!!)
-                .addOnSuccessListener {
-                    ref.downloadUrl.addOnSuccessListener {
-                        chatViewModel.imageUrl = it.toString()
-                        chatViewModel.performSendMessage()
-                    }
-                }
-    }
-
-    private fun uploadFile() {
-        if (chatViewModel.fileAttachmentUri == null) { return }
-        val filename = UUID.randomUUID().toString()
-        val ref = FirebaseStorage.getInstance().getReference("/files/$filename")
-        ref.putFile(chatViewModel.fileAttachmentUri!!).addOnSuccessListener {
-            ref.downloadUrl.addOnSuccessListener { it2 ->
-                val attachedFileSize = "%.2f".format(it.metadata!!.sizeBytes.toDouble() / 1000).toDouble()
-                chatViewModel.fileAttachment = FileAttachment(it.metadata?.contentType!!, attachedFileSize, it2.toString())
-                chatViewModel.performSendMessage()
             }
         }
     }

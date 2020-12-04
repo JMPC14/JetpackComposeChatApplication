@@ -24,6 +24,7 @@ class BlocklistViewModel: ViewModel() {
     }
 
     fun fetchBlocklist() {
+        blocklist.value = mutableListOf()
         val uid = FirebaseAuth.getInstance().uid
         FirebaseDatabase.getInstance().getReference("/users/$uid/blocklist")
                 .addListenerForSingleValueEvent(object : ValueEventListener {

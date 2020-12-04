@@ -108,14 +108,14 @@ class ChatFragment : Fragment() {
                         messages?.forEach {
                             if (it.fromId == userViewModel.user.value?.uid) {
                                 val modifier = if (chatViewModel.messages.value?.last() == it) {
-                                    Modifier.padding(bottom = 55.dp)
+                                    Modifier.padding(bottom = 70.dp)
                                 } else {
                                     Modifier.padding(0.dp)
                                 }
                                 ChatMessageFromItem(it, modifier)
                             } else {
                                 val modifier = if (chatViewModel.messages.value?.last() == it) {
-                                    Modifier.padding(bottom = 55.dp)
+                                    Modifier.padding(bottom = 70.dp)
                                 } else {
                                     Modifier.padding(0.dp)
                                 }

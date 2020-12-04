@@ -5,17 +5,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.ClickableText
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonConstants
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +25,7 @@ import androidx.compose.ui.draw.drawOpacity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -60,7 +60,7 @@ class RegisterFragment : Fragment() {
                     alignment = Alignment.Center, modifier = Modifier.fillMaxSize()
                     .then(Modifier.background(Color(resources.getColor(R.color.default_green, null))))
             ) {
-                Column(
+                ScrollableColumn(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxHeight()
                                 .then(Modifier.padding(top = 30.dp))
@@ -98,9 +98,11 @@ class RegisterFragment : Fragment() {
                         val passwordModifier = createModifier(passwordState)
                         val passwordConfirmModifier = createModifier(passwordConfirmationState)
 
-                        Column {
-//                            Image(asset = imageResource(R.drawable.ic_baseline_account_circle_white_24), modifier = Modifier.size(100.dp, 100.dp))
-                            Text("Choose a profile picture", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        TextButton(onClick = { /*TODO*/ }) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Image(asset = vectorResource(R.drawable.ic_baseline_account_circle_white_24), modifier = Modifier.size(100.dp, 100.dp))
+                                Text("Choose a profile picture", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            }
                         }
 
                         Box(alignment = Alignment.CenterStart, modifier = Modifier.padding(top = 20.dp)) {
@@ -184,7 +186,7 @@ class RegisterFragment : Fragment() {
                                     requireActivity().finish()
                                 },
                                 colors = ButtonConstants.defaultButtonColors(backgroundColor = Color.White),
-                                modifier = Modifier.padding(top = 30.dp).then(Modifier.size(width = 335.dp, height = 44.dp))
+                                modifier = Modifier.padding(top = 30.dp, bottom = 30.dp).then(Modifier.size(width = 335.dp, height = 44.dp))
                         ) {
                             Text("Register", color = Color(resources.getColor(R.color.default_green, null)))
                         }
@@ -194,7 +196,7 @@ class RegisterFragment : Fragment() {
 
             Column {
                 ClickableText(AnnotatedString("Back"), style = TextStyle(fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp),
-                        modifier = Modifier.padding(start = 20.dp, top = 0.dp), onClick = {
+                        modifier = Modifier.padding(start = 20.dp, top = 10.dp), onClick = {
                     this@RegisterFragment.findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
                 })
             }

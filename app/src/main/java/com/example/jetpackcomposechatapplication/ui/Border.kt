@@ -1,4 +1,4 @@
-package com.example.jetpackcomposechatapplication
+package com.example.jetpackcomposechatapplication.ui
 
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier

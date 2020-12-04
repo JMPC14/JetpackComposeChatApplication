@@ -70,6 +70,12 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.71828'
     implementation 'androidx.compose.runtime:runtime-livedata:1.0.0-alpha07'
     implementation "dev.chrisbanes.accompanist:accompanist-picasso:0.3.3.1"
+
+    implementation 'com.squareup.retrofit2:retrofit:2.7.2'
+    implementation 'com.squareup.retrofit2:converter-gson:2.7.2'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.7.1'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.3.1'
+
     implementation platform('com.google.firebase:firebase-bom:26.1.0')
     testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

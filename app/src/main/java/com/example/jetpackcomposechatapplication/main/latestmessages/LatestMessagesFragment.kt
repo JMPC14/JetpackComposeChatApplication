@@ -31,9 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.example.jetpackcomposechatapplication.Border
+import com.example.jetpackcomposechatapplication.ui.Border
 import com.example.jetpackcomposechatapplication.R
-import com.example.jetpackcomposechatapplication.border
+import com.example.jetpackcomposechatapplication.ui.border
 import com.example.jetpackcomposechatapplication.launcher.LauncherActivity
 import com.example.jetpackcomposechatapplication.main.blocklist.BlocklistViewModel
 import com.example.jetpackcomposechatapplication.main.chat.ChatViewModel

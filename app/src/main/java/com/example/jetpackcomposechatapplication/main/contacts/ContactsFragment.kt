@@ -24,8 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
-import com.example.jetpackcomposechatapplication.Border
-import com.example.jetpackcomposechatapplication.border
+import com.example.jetpackcomposechatapplication.ui.Border
+import com.example.jetpackcomposechatapplication.ui.border
 import com.example.jetpackcomposechatapplication.models.User
 import dev.chrisbanes.accompanist.picasso.PicassoImage
 

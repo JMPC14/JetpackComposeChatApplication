@@ -8,11 +8,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.compose.foundation.ClickableText
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -62,7 +60,7 @@ class LoginFragment : Fragment() {
                     alignment = Alignment.Center, modifier = Modifier.fillMaxSize()
                     .then(Modifier.background(Color(resources.getColor(R.color.default_green, null))))
             ) {
-                Column(
+                ScrollableColumn(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxHeight()
                                 .then(Modifier.padding(top = 100.dp))
@@ -193,7 +191,7 @@ class LoginFragment : Fragment() {
 
             Column {
                 ClickableText(AnnotatedString("Register"), style = TextStyle(fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp),
-                        modifier = Modifier.padding(end = 20.dp, top = 0.dp), onClick = {
+                        modifier = Modifier.padding(end = 20.dp, top = 10.dp), onClick = {
                     this@LoginFragment.findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
                 })
             }

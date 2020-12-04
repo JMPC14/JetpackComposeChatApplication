@@ -26,9 +26,9 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.example.jetpackcomposechatapplication.Border
+import com.example.jetpackcomposechatapplication.ui.Border
 import com.example.jetpackcomposechatapplication.R
-import com.example.jetpackcomposechatapplication.border
+import com.example.jetpackcomposechatapplication.ui.border
 import com.example.jetpackcomposechatapplication.main.latestmessages.UserViewModel
 import com.example.jetpackcomposechatapplication.main.chat.ChatViewModel
 import com.example.jetpackcomposechatapplication.main.contacts.ContactsViewModel
@@ -82,7 +82,9 @@ class NewConversationFragment: Fragment() {
                         .then(Modifier.border(bottom = Border(0.5.dp, Color.LightGray)))
                         .then(Modifier.fillMaxWidth())
                         .then(Modifier.clickable(onClick = {
-                            newConversation(user)
+                            chatViewModel.newConversation(user, userViewModel) {
+                                findNavController().navigate(R.id.action_newConversationFragment_to_chatFragment)
+                            }
                         }))
         ) {
             PicassoImage(
@@ -106,31 +108,5 @@ class NewConversationFragment: Fragment() {
                 )
             }
         }
-    }
-
-    private fun newConversation(user: User) {
-        fun moveOn() {
-            chatViewModel.tempUser = user
-            findNavController().navigate(R.id.action_newConversationFragment_to_chatFragment)
-        }
-
-        val cid = UUID.randomUUID().toString()
-        val ref = FirebaseDatabase.getInstance().getReference("/user-messages/${userViewModel.user.value?.uid}/${user.uid}")
-        val toRef = FirebaseDatabase.getInstance().getReference("/user-messages/${user.uid}/${userViewModel.user.value?.uid}")
-        ref.addListenerForSingleValueEvent(object: ValueEventListener {
-            override fun onCancelled(p0: DatabaseError) {}
-
-            override fun onDataChange(p0: DataSnapshot) {
-                if (!p0.child("cid").exists()) {
-                    ref.child("cid").setValue(cid)
-                    toRef.child("cid").setValue(cid)
-                            .addOnSuccessListener {
-                                moveOn()
-                            }
-                } else {
-                    moveOn()
-                }
-            }
-        })
     }
 }

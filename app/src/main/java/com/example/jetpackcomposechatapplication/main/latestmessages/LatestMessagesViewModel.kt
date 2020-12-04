@@ -36,6 +36,7 @@ class LatestMessagesViewModel: ViewModel() {
             fetchUserForMessage(snapshot.key!!, chatMessage)
         }
 
+        latestMessages.value = HashMap()
         val fromId = FirebaseAuth.getInstance().uid
         val ref = FirebaseDatabase.getInstance().getReference("/latest-messages/$fromId")
         ref.addChildEventListener(object: ChildEventListener {

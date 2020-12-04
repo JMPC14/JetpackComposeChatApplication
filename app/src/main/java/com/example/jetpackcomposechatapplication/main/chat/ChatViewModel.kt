@@ -1,14 +1,23 @@
 package com.example.jetpackcomposechatapplication.main.chat
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.navigation.fragment.findNavController
+import com.example.jetpackcomposechatapplication.R
+import com.example.jetpackcomposechatapplication.main.latestmessages.UserViewModel
 import com.example.jetpackcomposechatapplication.models.ChatMessage
 import com.example.jetpackcomposechatapplication.models.FileAttachment
 import com.example.jetpackcomposechatapplication.models.User
+import com.example.jetpackcomposechatapplication.notifications.ApiClient.apiService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.storage.FirebaseStorage
+import com.google.gson.JsonObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.time.LocalDateTime
 import java.util.*
 
@@ -218,23 +227,62 @@ class ChatViewModel: ViewModel() {
                     FirebaseDatabase.getInstance().getReference("/latest-messages/$toId/$fromId")
             latestMessageToRef.setValue(chatMessage)
 
-//            val payload = buildNotificationPayload()
-//            apiService.sendNotification(payload)!!.enqueue(
-//                    object : Callback<JsonObject?> {
-//                        override fun onResponse(
-//                                call: Call<JsonObject?>?,
-//                                response: Response<JsonObject?>
-//                        ) {
-//                            if (response.isSuccessful) {
-//                                Log.d("TAG", "Notification sent.")
-//                            }
-//                        }
-//
-//                        override fun onFailure(
-//                                call: Call<JsonObject?>?,
-//                                t: Throwable?
-//                        ) {}
-//                    })
+            val payload = buildNotificationPayload(chatMessage.text)
+            apiService.sendNotification(payload)!!.enqueue(
+                    object : Callback<JsonObject?> {
+                        override fun onResponse(
+                                call: Call<JsonObject?>?,
+                                response: Response<JsonObject?>
+                        ) {
+                            if (response.isSuccessful) {
+                                Log.d("TAG", "Notification sent.")
+                            }
+                        }
+
+                        override fun onFailure(
+                                call: Call<JsonObject?>?,
+                                t: Throwable?
+                        ) {}
+                    })
         }
+    }
+
+    private fun buildNotificationPayload(text: String): JsonObject {
+        val payload = JsonObject()
+        payload.addProperty("to", tempUser?.token)
+        val data = JsonObject()
+//        data.addProperty("title", FirebaseAuth.getInstance().uid)
+//        data.addProperty("body", FirebaseManager.messageKey)
+        data.addProperty("title", "username")
+        data.addProperty("body", text)
+        payload.add("notification", data)
+        Log.d("TAG", payload.toString())
+        return payload
+    }
+
+    fun newConversation(user: User, userViewModel: UserViewModel, callback: () -> Unit) {
+        fun moveOn() {
+            tempUser = user
+            callback()
+        }
+
+        val cid = UUID.randomUUID().toString()
+        val ref = FirebaseDatabase.getInstance().getReference("/user-messages/${userViewModel.user.value?.uid}/${user.uid}")
+        val toRef = FirebaseDatabase.getInstance().getReference("/user-messages/${user.uid}/${userViewModel.user.value?.uid}")
+        ref.addListenerForSingleValueEvent(object: ValueEventListener {
+            override fun onCancelled(p0: DatabaseError) {}
+
+            override fun onDataChange(p0: DataSnapshot) {
+                if (!p0.child("cid").exists()) {
+                    ref.child("cid").setValue(cid)
+                    toRef.child("cid").setValue(cid)
+                            .addOnSuccessListener {
+                                moveOn()
+                            }
+                } else {
+                    moveOn()
+                }
+            }
+        })
     }
 }

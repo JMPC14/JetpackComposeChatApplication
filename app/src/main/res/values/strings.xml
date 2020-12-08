@@ -13,4 +13,9 @@
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Slideshow</string>
+    <string name="profile">Profile</string>
+    <string name="latest_messages">Latest Messages</string>
+    <string name="contacts">Contacts</string>
+    <string name="blocklist">Blocklist</string>
+    <string name="sign_out">Sign Out</string>
 </resources>

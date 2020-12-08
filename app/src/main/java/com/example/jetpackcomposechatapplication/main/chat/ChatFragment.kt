@@ -4,10 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -33,9 +33,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavDirections
+import androidx.navigation.fragment.findNavController
 import com.example.jetpackcomposechatapplication.R
+import com.example.jetpackcomposechatapplication.main.blocklist.BlocklistViewModel
 import com.example.jetpackcomposechatapplication.main.latestmessages.UserViewModel
 import com.example.jetpackcomposechatapplication.models.ChatMessage
 import com.example.jetpackcomposechatapplication.models.FileAttachment
@@ -47,6 +51,9 @@ class ChatFragment : Fragment() {
 
     lateinit var chatViewModel: ChatViewModel
     lateinit var userViewModel: UserViewModel
+    lateinit var blocklistViewModel: BlocklistViewModel
+
+    private var presentDialog = mutableStateOf(false)
 
     var sendMessageState = mutableStateOf(TextFieldValue())
 
@@ -56,7 +63,13 @@ class ChatFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                Chat()
+                Box(alignment = Alignment.Center) {
+                    Chat()
+
+                    if (presentDialog.value) {
+                        UserDialog()
+                    }
+                }
             }
         }
     }
@@ -64,6 +77,7 @@ class ChatFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         chatViewModel = ViewModelProvider(requireActivity()).get(ChatViewModel::class.java)
         userViewModel = ViewModelProvider(requireActivity()).get(UserViewModel::class.java)
+        blocklistViewModel = ViewModelProvider(requireActivity()).get(BlocklistViewModel::class.java)
 
         with (chatViewModel) {
             messages.value = listOf()
@@ -172,7 +186,8 @@ class ChatFragment : Fragment() {
                         modifier = Modifier.size(35.dp)
                                 .then(Modifier.padding(start = 8.dp, bottom = 7.dp))
                                 .then(Modifier.clickable(onClick = {
-                                    if ("image already attached" == "") {
+                                    if (chatViewModel.photoAttachmentUri != null) {
+                                        Toast.makeText(requireContext(), "Image already attached.", Toast.LENGTH_LONG).show()
                                         return@clickable
                                     }
                                     val intent = Intent(Intent.ACTION_PICK)
@@ -186,8 +201,8 @@ class ChatFragment : Fragment() {
                         modifier = Modifier.size(42.dp)
                                 .then(Modifier.padding(start = 8.dp, end = 8.dp))
                                 .then(Modifier.clickable(onClick = {
-                                    Log.d("TAG", "CLICKED")
-                                    if ("file already attached" == "") {
+                                    if (chatViewModel.fileAttachmentUri != null) {
+                                        Toast.makeText(requireContext(), "File already attached.", Toast.LENGTH_LONG).show()
                                         return@clickable
                                     }
                                     val intent = Intent(Intent.ACTION_PICK)
@@ -248,7 +263,7 @@ class ChatFragment : Fragment() {
                     }
                     sendMessageState.value = TextFieldValue()
                 },
-                        modifier = Modifier.offset(x = (-3).dp, y = (-1).dp),
+                        modifier = Modifier.offset(x = (-4).dp, y = (-4).dp),
                         contentPadding = PaddingValues(0.dp),
                         colors = ButtonConstants.defaultButtonColors(
                                 backgroundColor = Color.Transparent,
@@ -324,7 +339,10 @@ class ChatFragment : Fragment() {
                                     .then(
                                             Modifier.size(35.dp)
                                                     .clip(CircleShape)
-                                    ),
+                                    )
+                                    .then(Modifier.clickable(onClick = {
+                                        presentDialog.value = true
+                                    })),
                             contentScale = ContentScale.Crop
                     )
                 }
@@ -386,6 +404,72 @@ class ChatFragment : Fragment() {
                 Text("${file.fileSize.div(1000)}mB")
             } else {
                 Text("${file.fileSize}kB")
+            }
+        }
+    }
+
+    @Composable
+    fun UserDialog() {
+        Column(
+                modifier = Modifier.fillMaxWidth(0.7f)
+                        .then(Modifier.background(Color.White, RoundedCornerShape(10.dp)))
+                        .then(Modifier.border(1.dp, Color.LightGray, RoundedCornerShape(10.dp)))
+                        .then(Modifier.padding(15.dp))
+        ) {
+            if (chatViewModel.tempUser != null) {
+                val color = if (chatViewModel.onlineUsers.value!!.contains(chatViewModel.tempUser?.uid)) Color(resources.getColor(R.color.default_green, null)) else Color.Black
+
+                Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 30.dp)
+                ) {
+                    PicassoImage(
+                            data = chatViewModel.tempUser!!.profileImageUrl,
+                            modifier = Modifier.padding(end = 10.dp)
+                                    .then(Modifier.border(1.5.dp, color, CircleShape))
+                                    .then(Modifier.drawShadow(4.dp, CircleShape))
+                                    .then(
+                                            Modifier.size(50.dp)
+                                                    .clip(CircleShape)
+                                    )
+                                    .then(Modifier.clickable(onClick = {
+                                        presentDialog.value = true
+                                    })),
+                            contentScale = ContentScale.Crop
+                    )
+
+                    Text(
+                            chatViewModel.tempUser!!.username,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    TextButton(onClick = {
+                        presentDialog.value = false
+                    }) {
+                        Text("Close")
+                    }
+                }
+            }
+
+            Row {
+                Button(onClick = { /*TODO*/ }) {
+                    Text("View Profile")
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Button(onClick = {
+                    if (chatViewModel.tempUser != null) {
+                        blocklistViewModel.addBlockedUser(chatViewModel.tempUser!!)
+                        presentDialog.value = false
+                        requireActivity().onBackPressed()
+                    }
+                }) {
+                    Text("Block")
+                }
             }
         }
     }

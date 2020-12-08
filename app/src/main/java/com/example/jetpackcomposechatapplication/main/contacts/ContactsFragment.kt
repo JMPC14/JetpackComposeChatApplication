@@ -53,11 +53,19 @@ class ContactsFragment : Fragment() {
     @Composable
     fun Contacts() {
         val contacts by contactsViewModel.contacts.observeAsState()
-        if (contacts != null) {
+        if (contacts != null && contacts!!.isNotEmpty()) {
             ScrollableColumn {
                 contacts?.forEach {
                     ContactItem(it)
                 }
+            }
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                        "You have no contacts!",
+                        modifier = Modifier.padding(10.dp),
+                        fontSize = 16.sp
+                )
             }
         }
     }

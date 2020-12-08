@@ -8,7 +8,7 @@ import com.example.jetpackcomposechatapplication.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
-class LatestMessagesViewModel: ViewModel() {
+class LatestMessagesViewModel : ViewModel() {
     val latestMessages = MutableLiveData<HashMap<User, ChatMessage>>()
 
     init {
@@ -21,25 +21,28 @@ class LatestMessagesViewModel: ViewModel() {
         latestMessages.value = map
     }
 
-    fun listenForLatestMessages(blocklistViewModel: BlocklistViewModel) {
+    fun listenForLatestMessages(blocklist: List<User>) {
+
         fun handleSnapshot(snapshot: DataSnapshot) {
             val chatMessage = snapshot.getValue(ChatMessage::class.java) ?: return
 
-            if (blocklistViewModel.blocklist.value != null && blocklistViewModel.blocklist.value!!.isNotEmpty() ) {
-                blocklistViewModel.blocklist.value?.forEach {
-                    if (chatMessage.fromId == it.uid) {
+            if (blocklist.isNotEmpty()) {
+                blocklist.forEach {
+                    if (chatMessage.fromId == it.uid || chatMessage.toId == it.uid) {
                         return
+                    } else {
+                        fetchUserForMessage(snapshot.key!!, chatMessage)
                     }
                 }
+            } else {
+                fetchUserForMessage(snapshot.key!!, chatMessage)
             }
-
-            fetchUserForMessage(snapshot.key!!, chatMessage)
         }
 
         latestMessages.value = HashMap()
         val fromId = FirebaseAuth.getInstance().uid
         val ref = FirebaseDatabase.getInstance().getReference("/latest-messages/$fromId")
-        ref.addChildEventListener(object: ChildEventListener {
+        ref.addChildEventListener(object : ChildEventListener {
             override fun onCancelled(p0: DatabaseError) {}
 
             override fun onChildAdded(p0: DataSnapshot, p1: String?) {
@@ -63,6 +66,16 @@ class LatestMessagesViewModel: ViewModel() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 user = snapshot.getValue(User::class.java)
                 if (user != null) {
+                    var keyRemove: User? = null
+                    latestMessages.value?.forEach {
+                        if (it.key.uid == user!!.uid) {
+                            keyRemove = it.key
+                            return@forEach
+                        }
+                    }
+                    if (keyRemove != null) {
+                        latestMessages.value?.remove(keyRemove!!)
+                    }
                     latestMessages.value!![user!!] = chatMessage
                     refreshRecyclerViewMessages()
                 }

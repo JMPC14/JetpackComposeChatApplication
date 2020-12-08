@@ -6,15 +6,15 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_profile"
-            android:title="Profile" />
+            android:title="@string/profile" />
         <item
             android:id="@+id/nav_latest_messages"
-            android:title="Latest Messages" />
+            android:title="@string/latest_messages" />
         <item
             android:id="@+id/nav_contacts"
-            android:title="Contacts" />
+            android:title="@string/contacts" />
         <item
             android:id="@+id/nav_blocklist"
-            android:title="Blocklist" />
+            android:title="@string/blocklist" />
     </group>
 </menu>

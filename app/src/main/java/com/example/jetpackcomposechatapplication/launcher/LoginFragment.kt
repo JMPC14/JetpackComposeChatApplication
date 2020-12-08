@@ -57,8 +57,9 @@ class LoginFragment : Fragment() {
     fun LoginForm() {
         Box(alignment = Alignment.TopEnd, modifier = Modifier.fillMaxSize()) {
             Box(
-                    alignment = Alignment.Center, modifier = Modifier.fillMaxSize()
-                    .then(Modifier.background(Color(resources.getColor(R.color.default_green, null))))
+                    alignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                            .then(Modifier.background(Color(resources.getColor(R.color.default_green, null))))
             ) {
                 ScrollableColumn(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -134,7 +135,6 @@ class LoginFragment : Fragment() {
 
                         Column(modifier = Modifier.align(Alignment.End)) {
                             ClickableText(AnnotatedString("Forgot Password?"), onClick = {
-                                Log.d("NEWTAG", "FORGOT PASSWORD")
                             }, style = TextStyle(color = Color.White, fontWeight =
                             FontWeight.Bold, fontSize = 16.sp), modifier = Modifier.padding(top = 12.dp, bottom = 15.dp))
                         }
@@ -168,7 +168,6 @@ class LoginFragment : Fragment() {
 
                                             startActivity(Intent(requireContext(), MainActivity::class.java))
                                             requireActivity().finish()
-                                            Log.d("NEWTAG", "LOGIN SUCCESSFUL")
                                         }
                                     }
                                     .addOnFailureListener {

@@ -4,6 +4,6 @@
     <item
         android:id="@+id/sign_out"
         android:orderInCategory="100"
-        android:title="Sign Out"
+        android:title="@string/sign_out"
         app:showAsAction="ifRoom" />
 </menu>

@@ -97,9 +97,12 @@ class LatestMessagesFragment : Fragment() {
             }
         }
 
-        latestMessagesViewModel.listenForLatestMessages(blocklistViewModel)
-        chatViewModel.listenForOnlineUsers()
         blocklistViewModel.fetchBlocklist()
+        chatViewModel.listenForOnlineUsers()
+
+        blocklistViewModel.blocklist.observe(viewLifecycleOwner, {
+            latestMessagesViewModel.listenForLatestMessages(blocklistViewModel.blocklist.value!!)
+        })
     }
 
     @Composable

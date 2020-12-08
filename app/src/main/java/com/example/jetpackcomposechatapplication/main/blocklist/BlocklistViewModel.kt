@@ -1,6 +1,5 @@
 package com.example.jetpackcomposechatapplication.main.blocklist
 
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.jetpackcomposechatapplication.models.User
@@ -10,17 +9,45 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
-class BlocklistViewModel: ViewModel() {
+class BlocklistViewModel : ViewModel() {
     var blocklist = MutableLiveData<List<User>>()
 
     init {
         blocklist.value = mutableListOf()
     }
 
-    fun addBlockedUser(user: User) {
+    fun readBlockedUser(user: User) {
         val mutableContacts = blocklist.value?.toMutableList()
         mutableContacts?.add(user)
         blocklist.value = mutableContacts!!
+    }
+
+    fun addBlockedUser(user: User) {
+        val mutableContacts = blocklist.value?.toMutableList()
+        if (!mutableContacts!!.contains(user)) {
+            mutableContacts.add(user)
+            blocklist.value = mutableContacts.toList()
+            val ref = FirebaseDatabase.getInstance().getReference("/users/${FirebaseAuth.getInstance().uid}/blocklist")
+            val uidList = mutableListOf<String>()
+            blocklist.value!!.forEach {
+                uidList.add(it.uid)
+            }
+            ref.setValue(uidList)
+        }
+    }
+
+    fun removeBlockedUser(user: User) {
+        val mutableContacts = blocklist.value?.toMutableList()
+        if (mutableContacts!!.contains(user)) {
+            mutableContacts.remove(user)
+            blocklist.value = mutableContacts.toList()
+            val ref = FirebaseDatabase.getInstance().getReference("/users/${FirebaseAuth.getInstance().uid}/blocklist")
+            val uidList = mutableListOf<String>()
+            blocklist.value!!.forEach {
+                uidList.add(it.uid)
+            }
+            ref.setValue(uidList)
+        }
     }
 
     fun fetchBlocklist() {
@@ -37,8 +64,7 @@ class BlocklistViewModel: ViewModel() {
                                 override fun onDataChange(snapshot: DataSnapshot) {
                                     val user = snapshot.getValue(User::class.java)
                                     if (user != null) {
-                                        addBlockedUser(user)
-                                        Log.d("NEWTAG", "ADDING CONTACT $user")
+                                        readBlockedUser(user)
                                     }
                                 }
 

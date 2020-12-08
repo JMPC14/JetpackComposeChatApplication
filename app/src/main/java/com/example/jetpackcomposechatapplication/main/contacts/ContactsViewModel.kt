@@ -1,6 +1,5 @@
 package com.example.jetpackcomposechatapplication.main.contacts
 
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.jetpackcomposechatapplication.models.User
@@ -10,7 +9,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
-class ContactsViewModel: ViewModel() {
+class ContactsViewModel : ViewModel() {
     var contacts = MutableLiveData<List<User>>()
 
     init {
@@ -27,7 +26,7 @@ class ContactsViewModel: ViewModel() {
         contacts.value = mutableListOf()
         val uid = FirebaseAuth.getInstance().uid
         FirebaseDatabase.getInstance().getReference("/users/$uid/contacts")
-                .addListenerForSingleValueEvent(object: ValueEventListener {
+                .addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onCancelled(p0: DatabaseError) {}
 
                     override fun onDataChange(p0: DataSnapshot) {
@@ -38,7 +37,6 @@ class ContactsViewModel: ViewModel() {
                                     val user = snapshot.getValue(User::class.java)
                                     if (user != null) {
                                         addContact(user)
-                                        Log.d("NEWTAG", "ADDING CONTACT $user")
                                     }
                                 }
 

@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,11 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.NavDirections
-import androidx.navigation.fragment.findNavController
 import com.example.jetpackcomposechatapplication.R
 import com.example.jetpackcomposechatapplication.main.blocklist.BlocklistViewModel
 import com.example.jetpackcomposechatapplication.main.latestmessages.UserViewModel
@@ -123,21 +119,26 @@ class ChatFragment : Fragment() {
                     val messages by chatViewModel.messages.observeAsState()
                     if (messages != null) {
                         messages?.forEach {
+                            var showTime = false
+                            if ((it.time - compareTime) > 300) {
+                                showTime = true
+                            }
                             if (it.fromId == userViewModel.user.value?.uid) {
                                 val modifier = if (chatViewModel.messages.value?.last() == it) {
                                     Modifier.padding(bottom = 70.dp)
                                 } else {
                                     Modifier.padding(0.dp)
                                 }
-                                ChatMessageFromItem(it, modifier)
+                                ChatMessageFromItem(it, modifier, showTime)
                             } else {
                                 val modifier = if (chatViewModel.messages.value?.last() == it) {
                                     Modifier.padding(bottom = 70.dp)
                                 } else {
                                     Modifier.padding(0.dp)
                                 }
-                                ChatMessageToItem(it, modifier)
+                                ChatMessageToItem(it, modifier, showTime)
                             }
+                            compareTime = it.time
                         }
 
                         scrollState.scrollTo(0f)
@@ -256,12 +257,18 @@ class ChatFragment : Fragment() {
 
                 TextButton(onClick = {
                     with(chatViewModel) {
-                        if (photoAttachmentUri != null) {
-                            uploadImage(userViewModel.user.value!!.username)
-                        } else if (fileAttachmentUri != null) {
-                            uploadFile(userViewModel.user.value!!.username)
-                        } else {
-                            performSendMessage(userViewModel.user.value!!.username)
+                        when {
+                            photoAttachmentUri != null -> {
+                                uploadImage(userViewModel.user.value!!.username)
+                            }
+
+                            fileAttachmentUri != null -> {
+                                uploadFile(userViewModel.user.value!!.username)
+                            }
+
+                            else -> {
+                                performSendMessage(userViewModel.user.value!!.username)
+                            }
                         }
                     }
                     sendMessageState.value = TextFieldValue()
@@ -280,10 +287,12 @@ class ChatFragment : Fragment() {
     }
 
     @Composable
-    fun ChatMessageFromItem(message: ChatMessage, modifier: Modifier) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+    fun ChatMessageFromItem(message: ChatMessage, modifier: Modifier, showTime: Boolean) {
+        if (showTime) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(message.timestamp)
             }
+        }
 
         Column {
             Row(modifier = modifier) {
@@ -334,10 +343,12 @@ class ChatFragment : Fragment() {
     }
 
     @Composable
-    fun ChatMessageToItem(message: ChatMessage, modifier: Modifier) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+    fun ChatMessageToItem(message: ChatMessage, modifier: Modifier, showTime: Boolean) {
+        if (showTime) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(message.timestamp)
             }
+        }
 
         Column {
             Row(modifier = modifier) {

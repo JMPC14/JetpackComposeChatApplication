@@ -2,23 +2,24 @@ package com.example.jetpackcomposechatapplication.main.latestmessages
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.jetpackcomposechatapplication.main.blocklist.BlocklistViewModel
 import com.example.jetpackcomposechatapplication.models.ChatMessage
 import com.example.jetpackcomposechatapplication.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import java.util.*
+import kotlin.collections.HashMap
 
 class LatestMessagesViewModel : ViewModel() {
     val latestMessages = MutableLiveData<HashMap<User, ChatMessage>>()
+    val sortedMap = MutableLiveData<Map<User, ChatMessage>>()
 
     init {
         latestMessages.value = HashMap()
     }
 
-    private fun refreshRecyclerViewMessages() {
-        val map = HashMap<User, ChatMessage>()
-        latestMessages.value!!.toList().sortedByDescending { it.second.time }.toMap(map)
-        latestMessages.value = map
+    fun refreshRecyclerViewMessages() {
+        sortedMap.value = HashMap()
+        sortedMap.value = latestMessages.value!!.toList().sortedByDescending { it.second.time }.toMap()
     }
 
     fun listenForLatestMessages(blocklist: List<User>) {
@@ -45,13 +46,9 @@ class LatestMessagesViewModel : ViewModel() {
         ref.addChildEventListener(object : ChildEventListener {
             override fun onCancelled(p0: DatabaseError) {}
 
-            override fun onChildAdded(p0: DataSnapshot, p1: String?) {
-                handleSnapshot(p0)
-            }
+            override fun onChildAdded(p0: DataSnapshot, p1: String?) = handleSnapshot(p0)
 
-            override fun onChildChanged(p0: DataSnapshot, p1: String?) {
-                handleSnapshot(p0)
-            }
+            override fun onChildChanged(p0: DataSnapshot, p1: String?) = handleSnapshot(p0)
 
             override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
 

@@ -216,7 +216,7 @@ class RegisterFragment : Fragment() {
                             Text(
                                     "Confirm Password",
                                     modifier = Modifier.padding(start = 14.dp, top = 20.dp)
-                                            .then(Modifier.drawOpacity(if (passwordState.value.text == "") 0.7f else 0f)),
+                                            .then(Modifier.drawOpacity(if (passwordConfirmationState.value.text == "") 0.7f else 0f)),
                                     color = (Color.White)
                             )
                         }

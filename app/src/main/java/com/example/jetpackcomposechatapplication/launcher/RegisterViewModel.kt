@@ -24,7 +24,7 @@ class RegisterViewModel: ViewModel() {
                 ref.downloadUrl.addOnSuccessListener { it2 ->
                     Log.d("Main", "File Location: $it2")
 
-                    callback(it.metadata!!.path)
+                    callback(it2.toString())
                 }
             }
             .addOnFailureListener {

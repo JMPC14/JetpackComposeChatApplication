@@ -61,6 +61,14 @@ class ChatViewModel: ViewModel() {
                     override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                         val message = snapshot.getValue(ChatMessage::class.java)
                         if (message != null) {
+                            if (messages.value!!.isNotEmpty()) {
+                                if (messages.value!!.last().time != message.time) {
+                                    addMessage(message)
+                                    return
+                                } else {
+                                    return
+                                }
+                            }
                             addMessage(message)
                         }
                     }
@@ -132,7 +140,7 @@ class ChatViewModel: ViewModel() {
         })
     }
 
-    fun uploadImage() {
+    fun uploadImage(from: String) {
         if (photoAttachmentUri == null) {
             return
         }
@@ -142,12 +150,12 @@ class ChatViewModel: ViewModel() {
                 .addOnSuccessListener {
                     ref.downloadUrl.addOnSuccessListener {
                         imageUrl = it.toString()
-                        performSendMessage()
+                        performSendMessage(from)
                     }
                 }
     }
 
-    fun uploadFile() {
+    fun uploadFile(from: String) {
         if (fileAttachmentUri == null) { return }
         val filename = UUID.randomUUID().toString()
         val ref = FirebaseStorage.getInstance().getReference("/files/$filename")
@@ -155,12 +163,12 @@ class ChatViewModel: ViewModel() {
             ref.downloadUrl.addOnSuccessListener { it2 ->
                 val attachedFileSize = "%.2f".format(it.metadata!!.sizeBytes.toDouble() / 1000).toDouble()
                 fileAttachment = FileAttachment(it.metadata?.contentType!!, attachedFileSize, it2.toString())
-                performSendMessage()
+                performSendMessage(from)
             }
         }
     }
 
-    fun performSendMessage() {
+    fun performSendMessage(from: String) {
         val text = tempWriting.value!!
 
         val fromId = FirebaseAuth.getInstance().uid ?: return
@@ -227,7 +235,7 @@ class ChatViewModel: ViewModel() {
                     FirebaseDatabase.getInstance().getReference("/latest-messages/$toId/$fromId")
             latestMessageToRef.setValue(chatMessage)
 
-            val payload = buildNotificationPayload(chatMessage.text)
+            val payload = buildNotificationPayload(chatMessage.text, from)
             apiService.sendNotification(payload)!!.enqueue(
                     object : Callback<JsonObject?> {
                         override fun onResponse(
@@ -247,13 +255,13 @@ class ChatViewModel: ViewModel() {
         }
     }
 
-    private fun buildNotificationPayload(text: String): JsonObject {
+    private fun buildNotificationPayload(text: String, from: String): JsonObject {
         val payload = JsonObject()
         payload.addProperty("to", tempUser?.token)
         val data = JsonObject()
 //        data.addProperty("title", FirebaseAuth.getInstance().uid)
 //        data.addProperty("body", FirebaseManager.messageKey)
-        data.addProperty("title", "username")
+        data.addProperty("title", from)
         data.addProperty("body", text)
         payload.add("notification", data)
         Log.d("TAG", payload.toString())

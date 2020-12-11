@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -49,13 +50,13 @@ import java.util.*
 
 class ChatFragment : Fragment() {
 
-    lateinit var chatViewModel: ChatViewModel
-    lateinit var userViewModel: UserViewModel
-    lateinit var blocklistViewModel: BlocklistViewModel
+    private lateinit var chatViewModel: ChatViewModel
+    private lateinit var userViewModel: UserViewModel
+    private lateinit var blocklistViewModel: BlocklistViewModel
 
     private var presentDialog = mutableStateOf(false)
 
-    var sendMessageState = mutableStateOf(TextFieldValue())
+    private var sendMessageState = mutableStateOf(TextFieldValue())
 
     override fun onCreateView(
             inflater: LayoutInflater, container: ViewGroup?,
@@ -106,6 +107,8 @@ class ChatFragment : Fragment() {
             chatViewModel.fileAttachmentUri = data.data
         }
     }
+
+    var compareTime: Long = 0
 
     @Composable
     fun Chat() {
@@ -254,11 +257,11 @@ class ChatFragment : Fragment() {
                 TextButton(onClick = {
                     with(chatViewModel) {
                         if (photoAttachmentUri != null) {
-                            uploadImage()
+                            uploadImage(userViewModel.user.value!!.username)
                         } else if (fileAttachmentUri != null) {
-                            uploadFile()
+                            uploadFile(userViewModel.user.value!!.username)
                         } else {
-                            performSendMessage()
+                            performSendMessage(userViewModel.user.value!!.username)
                         }
                     }
                     sendMessageState.value = TextFieldValue()
@@ -278,47 +281,53 @@ class ChatFragment : Fragment() {
 
     @Composable
     fun ChatMessageFromItem(message: ChatMessage, modifier: Modifier) {
-        Row(modifier = modifier) {
-            Spacer(modifier = Modifier.weight(1f))
-
-            Column(
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier.padding(4.dp)
-                            .then(Modifier.background(Color(resources.getColor(R.color.default_green, null)), RoundedCornerShape(8.dp)))
-                            .then(Modifier.padding(5.dp))
-                            .then(Modifier.preferredWidthIn(max = 250.dp))
-            ) {
-                if (message.text.isNotEmpty()) {
-                    Row {
-                        Text(message.text)
-                    }
-                }
-
-                with (message) {
-                    if (imageUrl != null) {
-                        ChatImage(imageUrl!!)
-                    }
-
-                    if (fileUrl != null && fileSize != null && fileType != null) {
-                        val file = FileAttachment(fileType!!, fileSize!!, fileUrl!!)
-                        ChatFile(file)
-                    }
-                }
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Text(message.timestamp)
             }
 
-            if (userViewModel.user.value?.profileImageUrl != null) {
-                Column {
-                    PicassoImage(
-                            data = userViewModel.user.value?.profileImageUrl!!,
-                            modifier = Modifier.padding(top = 5.dp, end = 5.dp)
-                                    .then(Modifier.border(1.5.dp, Color(resources.getColor(R.color.default_green, null)), CircleShape))
-                                    .then(Modifier.drawShadow(4.dp, CircleShape))
-                                    .then(
-                                            Modifier.size(35.dp)
-                                                    .clip(CircleShape)
-                                    ),
-                            contentScale = ContentScale.Crop
-                    )
+        Column {
+            Row(modifier = modifier) {
+                Spacer(modifier = Modifier.weight(1f))
+
+                Column(
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier.padding(4.dp)
+                                .then(Modifier.background(Color(resources.getColor(R.color.default_green, null)), RoundedCornerShape(8.dp)))
+                                .then(Modifier.padding(5.dp))
+                                .then(Modifier.preferredWidthIn(max = 250.dp))
+                ) {
+                    if (message.text.isNotEmpty()) {
+                        Row {
+                            Text(message.text)
+                        }
+                    }
+
+                    with (message) {
+                        if (imageUrl != null) {
+                            ChatImage(imageUrl!!)
+                        }
+
+                        if (fileUrl != null && fileSize != null && fileType != null) {
+                            val file = FileAttachment(fileType!!, fileSize!!, fileUrl!!)
+                            ChatFile(file)
+                        }
+                    }
+                }
+
+                if (userViewModel.user.value?.profileImageUrl != null) {
+                    Column {
+                        PicassoImage(
+                                data = userViewModel.user.value?.profileImageUrl!!,
+                                modifier = Modifier.padding(top = 5.dp, end = 5.dp)
+                                        .then(Modifier.border(1.5.dp, Color(resources.getColor(R.color.default_green, null)), CircleShape))
+                                        .then(Modifier.drawShadow(4.dp, CircleShape))
+                                        .then(
+                                                Modifier.size(35.dp)
+                                                        .clip(CircleShape)
+                                        ),
+                                contentScale = ContentScale.Crop
+                        )
+                    }
                 }
             }
         }
@@ -326,43 +335,49 @@ class ChatFragment : Fragment() {
 
     @Composable
     fun ChatMessageToItem(message: ChatMessage, modifier: Modifier) {
-        Row(modifier = modifier) {
-            if (chatViewModel.tempUser != null) {
-                Column {
-                    val color = if (chatViewModel.onlineUsers.value!!.contains(message.fromId)) Color(resources.getColor(R.color.default_green, null)) else Color.Black
-
-                    PicassoImage(
-                            data = chatViewModel.tempUser!!.profileImageUrl,
-                            modifier = Modifier.padding(top = 5.dp, start = 5.dp)
-                                    .then(Modifier.border(1.5.dp, color, CircleShape))
-                                    .then(Modifier.drawShadow(4.dp, CircleShape))
-                                    .then(
-                                            Modifier.size(35.dp)
-                                                    .clip(CircleShape)
-                                    )
-                                    .then(Modifier.clickable(onClick = {
-                                        presentDialog.value = true
-                                    })),
-                            contentScale = ContentScale.Crop
-                    )
-                }
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Text(message.timestamp)
             }
 
-            Column(
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier.padding(4.dp)
-                            .then(Modifier.background(Color.LightGray, RoundedCornerShape(8.dp)))
-                            .then(Modifier.padding(5.dp))
-                            .then(Modifier.preferredWidthIn(max = 250.dp))
-            ) {
-                if (message.text.isNotEmpty()) {
-                    Row {
-                        Text(message.text)
+        Column {
+            Row(modifier = modifier) {
+                if (chatViewModel.tempUser != null) {
+                    Column {
+                        val color = if (chatViewModel.onlineUsers.value!!.contains(message.fromId)) Color(resources.getColor(R.color.default_green, null)) else Color.Black
+
+                        PicassoImage(
+                                data = chatViewModel.tempUser!!.profileImageUrl,
+                                modifier = Modifier.padding(top = 5.dp, start = 5.dp)
+                                        .then(Modifier.border(1.5.dp, color, CircleShape))
+                                        .then(Modifier.drawShadow(4.dp, CircleShape))
+                                        .then(
+                                                Modifier.size(35.dp)
+                                                        .clip(CircleShape)
+                                        )
+                                        .then(Modifier.clickable(onClick = {
+                                            presentDialog.value = true
+                                        })),
+                                contentScale = ContentScale.Crop
+                        )
                     }
                 }
 
-                if (message.imageUrl != null) {
-                    ChatImage(message.imageUrl!!)
+                Column(
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier.padding(4.dp)
+                                .then(Modifier.background(Color.LightGray, RoundedCornerShape(8.dp)))
+                                .then(Modifier.padding(5.dp))
+                                .then(Modifier.preferredWidthIn(max = 250.dp))
+                ) {
+                    if (message.text.isNotEmpty()) {
+                        Row {
+                            Text(message.text)
+                        }
+                    }
+
+                    if (message.imageUrl != null) {
+                        ChatImage(message.imageUrl!!)
+                    }
                 }
             }
         }

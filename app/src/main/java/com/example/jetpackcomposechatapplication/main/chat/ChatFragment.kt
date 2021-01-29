@@ -104,6 +104,7 @@ class ChatFragment : Fragment() {
         }
     }
 
+    var previousMessage: String? = null
     var compareTime: Long = 0
 
     @Composable
@@ -119,28 +120,38 @@ class ChatFragment : Fragment() {
                     val messages by chatViewModel.messages.observeAsState()
                     if (messages != null) {
                         messages?.forEach {
+                            var consecutive = false
+                            if (it.fromId == previousMessage) {
+                                consecutive = true
+                            }
                             var showTime = false
                             if ((it.time - compareTime) > 300) {
                                 showTime = true
                             }
                             if (it.fromId == userViewModel.user.value?.uid) {
-                                val modifier = if (chatViewModel.messages.value?.last() == it) {
+                                var modifier = if (chatViewModel.messages.value?.last() == it) {
                                     Modifier.padding(bottom = 70.dp)
                                 } else {
                                     Modifier.padding(0.dp)
                                 }
-                                ChatMessageFromItem(it, modifier, showTime)
+                                if (consecutive && !showTime) {
+                                    modifier = modifier.then(Modifier.padding(end = 42.dp))
+                                }
+                                ChatMessageFromItem(it, modifier, showTime, consecutive)
                             } else {
-                                val modifier = if (chatViewModel.messages.value?.last() == it) {
+                                var modifier = if (chatViewModel.messages.value?.last() == it) {
                                     Modifier.padding(bottom = 70.dp)
                                 } else {
                                     Modifier.padding(0.dp)
                                 }
-                                ChatMessageToItem(it, modifier, showTime)
+                                if (consecutive && !showTime) {
+                                    modifier = modifier.then(Modifier.padding(start = 42.dp))
+                                }
+                                ChatMessageToItem(it, modifier, showTime, consecutive)
                             }
+                            previousMessage = it.fromId
                             compareTime = it.time
                         }
-
                         scrollState.scrollTo(0f)
                     }
                 }
@@ -287,7 +298,7 @@ class ChatFragment : Fragment() {
     }
 
     @Composable
-    fun ChatMessageFromItem(message: ChatMessage, modifier: Modifier, showTime: Boolean) {
+    fun ChatMessageFromItem(message: ChatMessage, modifier: Modifier, showTime: Boolean, consecutive: Boolean = false) {
         if (showTime) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(message.timestamp)
@@ -300,7 +311,7 @@ class ChatFragment : Fragment() {
 
                 Column(
                         horizontalAlignment = Alignment.Start,
-                        modifier = Modifier.padding(4.dp)
+                        modifier = Modifier.padding(if (consecutive && !showTime) 2.dp else 4.dp)
                                 .then(Modifier.background(Color(resources.getColor(R.color.default_green, null)), RoundedCornerShape(8.dp)))
                                 .then(Modifier.padding(5.dp))
                                 .then(Modifier.preferredWidthIn(max = 250.dp))
@@ -323,7 +334,7 @@ class ChatFragment : Fragment() {
                     }
                 }
 
-                if (userViewModel.user.value?.profileImageUrl != null) {
+                if (userViewModel.user.value?.profileImageUrl != null && (!consecutive || showTime)) {
                     Column {
                         PicassoImage(
                                 data = userViewModel.user.value?.profileImageUrl!!,
@@ -343,7 +354,7 @@ class ChatFragment : Fragment() {
     }
 
     @Composable
-    fun ChatMessageToItem(message: ChatMessage, modifier: Modifier, showTime: Boolean) {
+    fun ChatMessageToItem(message: ChatMessage, modifier: Modifier, showTime: Boolean, consecutive: Boolean = false) {
         if (showTime) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(message.timestamp)
@@ -352,7 +363,7 @@ class ChatFragment : Fragment() {
 
         Column {
             Row(modifier = modifier) {
-                if (chatViewModel.tempUser != null) {
+                if (chatViewModel.tempUser != null && (!consecutive || showTime)) {
                     Column {
                         val color = if (chatViewModel.onlineUsers.value!!.contains(message.fromId)) Color(resources.getColor(R.color.default_green, null)) else Color.Black
 
@@ -375,7 +386,7 @@ class ChatFragment : Fragment() {
 
                 Column(
                         horizontalAlignment = Alignment.Start,
-                        modifier = Modifier.padding(4.dp)
+                        modifier = Modifier.padding(if (consecutive && !showTime) 2.dp else 4.dp)
                                 .then(Modifier.background(Color.LightGray, RoundedCornerShape(8.dp)))
                                 .then(Modifier.padding(5.dp))
                                 .then(Modifier.preferredWidthIn(max = 250.dp))
